@@ -18,3 +18,5 @@ data/
 .env
 cookies.txt
 *.html.tmp
+
+*.png
