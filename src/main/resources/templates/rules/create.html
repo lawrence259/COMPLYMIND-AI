@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Add Compliance Rule')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#create-rule-content}, 'rules')}">
+    <div id="create-rule-content">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/rules}">Rules</a></li>
+                <li class="breadcrumb-item active">Add Rule</li>
+            </ol>
+        </nav>
+
+        <div class="card-cm" style="max-width: 700px; margin: 0 auto;">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-journal-plus text-primary"></i> Register Compliance Rule
+            </h5>
+
+            <form th:action="@{/rules/create}" th:object="${rule}" method="post">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Framework</label>
+                        <select name="frameworkId" class="form-select" required>
+                            <option value="">-- Select Framework --</option>
+                            <option th:each="fw : ${frameworks}" th:value="${fw.id}" th:text="${fw.name} + ' (' + ${fw.cycleYear} + ')'"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Rule Code</label>
+                        <input type="text" th:field="*{ruleCode}" class="form-control" placeholder="e.g. RULE-FIR-04" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Rule Name</label>
+                    <input type="text" th:field="*{name}" class="form-control" placeholder="e.g. Fire and Life Safety NOC Compliance" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Statutory Description</label>
+                    <textarea th:field="*{description}" class="form-control" rows="3" placeholder="Exact requirement clause and guidelines..."></textarea>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Source Section / Clause</label>
+                        <input type="text" th:field="*{sourceSection}" class="form-control" placeholder="Section 2.8">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Official AICTE URL (if verified)</label>
+                        <input type="url" th:field="*{sourceUrl}" class="form-control" placeholder="https://www.aicte-india.org/...">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Required Evidence Type</label>
+                        <input type="text" th:field="*{requiredEvidenceType}" class="form-control" placeholder="Fire Safety NOC Certificate (PDF)">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Validation Method</label>
+                        <input type="text" th:field="*{validationMethod}" class="form-control" placeholder="Issuing Authority Seal, Validity Date Check">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Rule Version</label>
+                        <input type="text" th:field="*{version}" class="form-control" value="1.0" required>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center mt-4">
+                        <div class="form-check">
+                            <input type="checkbox" th:field="*{verified}" class="form-check-input" id="checkVerified">
+                            <label class="form-check-label small" for="checkVerified">
+                                Verified Official AICTE Source
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/rules}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary fw-semibold">Register Rule</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

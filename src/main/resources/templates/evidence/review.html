@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Evidence Verification Review')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#review-content}, 'applications')}">
+    <div id="review-content">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${evidence.application.id}}" th:text="${evidence.application.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Evidence Verification &amp; Review</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Human Reviewer Verification Portal</h4>
+                <p class="text-muted small mb-0">Evaluate evidence against statutory compliance rules with text extraction assistance</p>
+            </div>
+            <a th:href="@{'/applications/' + ${evidence.application.id}}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Application
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Document Details & Extracted Content -->
+            <div class="col-lg-7">
+                <div class="card-cm mb-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-file-earmark-text text-primary"></i> Document Metadata
+                        </h6>
+                        <span th:class="'badge-status badge-' + ${evidence.reviewStatus}" th:text="${evidence.reviewStatus}"></span>
+                    </div>
+
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted small" style="width: 140px;">Original Filename:</td>
+                            <td class="fw-semibold" th:text="${evidence.originalFilename}">Land_Deed.pdf</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small">Linked Requirement:</td>
+                            <td class="fw-semibold text-primary">
+                                <span th:text="${evidence.applicationRequirement.requirement.code}"></span> &mdash;
+                                <span th:text="${evidence.applicationRequirement.requirement.title}"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small">MIME Type:</td>
+                            <td th:text="${evidence.mimeType}">application/pdf</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small">File Size:</td>
+                            <td th:text="${evidence.fileSize} + ' bytes'">2 MB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small">SHA-256 Checksum:</td>
+                            <td><code class="small" th:text="${evidence.sha256Checksum}">e3b0c442...</code></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small">Version:</td>
+                            <td><span class="badge bg-secondary" th:text="'v' + ${evidence.versionNumber}">v1</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small">Upload Timestamp:</td>
+                            <td th:text="${#temporals.format(evidence.createdAt, 'dd MMM yyyy HH:mm:ss')}">Timestamp</td>
+                        </tr>
+                    </table>
+
+                    <div class="mt-3">
+                        <a th:href="@{'/evidence/download/' + ${evidence.id}}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download"></i> Download Original File
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Extracted Text Display -->
+                <div class="card-cm">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-cpu text-info"></i> Apache Tika / POI Extracted Text
+                        </h6>
+                        <span class="badge" th:classappend="${evidence.extractionStatus == 'SUCCESS' ? 'bg-success' : 'bg-warning'}"
+                              th:text="${evidence.extractionStatus}"></span>
+                    </div>
+
+                    <p class="text-muted small mb-2">
+                        Text extracted on the server side for reviewer search and rule checking. Not automatic proof of compliance.
+                    </p>
+
+                    <div th:if="${evidence.extractedText != null && !evidence.extractedText.empty}"
+                         class="p-3 bg-light rounded border"
+                         style="max-height: 350px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap;"
+                         th:text="${evidence.extractedText}">
+                    </div>
+
+                    <div th:if="${evidence.extractedText == null || evidence.extractedText.empty}" class="alert alert-secondary py-3 text-center small">
+                        No extractable text found in this file (e.g. image-only scan without OCR). Visual review required.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Verification Action Form -->
+            <div class="col-lg-5">
+                <div class="card-cm border-primary">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">Record Review Decision</h5>
+                    <p class="text-muted small mb-4">
+                        Submitting an APPROVED decision will mark the linked requirement as SATISFIED and dynamically trigger the Compliance Ripple Engine to unblock downstream requirements.
+                    </p>
+
+                    <form th:action="@{'/evidence/review/' + ${evidence.id}}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Verification Decision</label>
+                            <select name="decision" class="form-select" required>
+                                <option value="APPROVED">APPROVE &mdash; Evidence Satisfies AICTE Criteria</option>
+                                <option value="REJECTED">REJECT &mdash; Deficient / Fraudulent / Unreadable</option>
+                                <option value="REQUIRES_REVISION">REQUEST REVISION &mdash; Additional Clarification Needed</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold">Reviewer Notes &amp; Observations</label>
+                            <textarea name="comments" rows="5" class="form-control"
+                                      placeholder="State statutory reasons, verified document numbers, or rejection grounds..." required></textarea>
+                            <div class="form-text small">This comment will be permanently stamped in the Evidence Passport audit trail.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <i class="bi bi-check2-circle"></i> Submit Verification Decision
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

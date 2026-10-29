@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Risk Assessment & Explanation')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#risk-content}, 'applications')}">
+    <div id="risk-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Explainable Risk Engine</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Explainable Compliance Risk Assessment</h4>
+                <p class="text-muted small mb-0">Deterministic rules-based multi-factor heuristic formula</p>
+            </div>
+            <form th:action="@{'/applications/' + ${currApp.id} + '/risk/recalculate'}" method="post">
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-calculator"></i> Recompute Risk Score
+                </button>
+            </form>
+        </div>
+
+        <!-- Non-Authoritative Heuristic Disclaimer Banner -->
+        <div class="alert alert-warning py-2 mb-4 d-flex align-items-center gap-2 small">
+            <i class="bi bi-shield-exclamation fs-4"></i>
+            <div>
+                <strong>Heuristic Disclaimer:</strong> <span th:text="${breakdown.heuristicDisclaimer}"></span>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Overall Score Card -->
+            <div class="col-lg-4">
+                <div class="card-cm text-center h-100 d-flex flex-column justify-content-center">
+                    <div class="text-muted small fw-semibold text-uppercase mb-2">Overall Compliance Risk</div>
+                    <div class="display-3 fw-bold mb-2" th:classappend="${breakdown.riskBand.name() == 'CRITICAL' ? 'text-danger' : (breakdown.riskBand.name() == 'HIGH' ? 'text-warning' : 'text-success')}"
+                         th:text="${breakdown.overallScore}">
+                        0.0
+                    </div>
+                    <div class="mb-3">
+                        <span th:class="'risk-pill fs-6 px-3 py-1 risk-' + ${breakdown.riskBand}" th:text="${breakdown.riskBand}">LOW</span>
+                    </div>
+                    <p class="text-muted small mb-0">Score scaled strictly from 0 to 100 based on active constraints</p>
+                </div>
+            </div>
+
+            <!-- Four Normalized Factor Breakdown -->
+            <div class="col-lg-8">
+                <div class="card-cm h-100">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">Normalized Contributing Risk Factors</h6>
+
+                    <!-- Factor 1: Deadline Urgency -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>Deadline Urgency (Weight: 35%)</span>
+                            <span th:text="${breakdown.deadlineUrgencyScore} + ' / 100'">0 / 100</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" th:style="'width: ' + ${breakdown.deadlineUrgencyScore} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <!-- Factor 2: Blocked Dependency Severity -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>Blocked Dependency Severity (Weight: 30%)</span>
+                            <span th:text="${breakdown.blockedDependencyScore} + ' / 100'">0 / 100</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-danger" role="progressbar" th:style="'width: ' + ${breakdown.blockedDependencyScore} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <!-- Factor 3: Evidence Deficiency -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>Evidence Deficiency (Weight: 20%)</span>
+                            <span th:text="${breakdown.evidenceDeficiencyScore} + ' / 100'">0 / 100</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" th:style="'width: ' + ${breakdown.evidenceDeficiencyScore} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <!-- Factor 4: Unresolved Pendency -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>Unresolved Pendency (Weight: 15%)</span>
+                            <span th:text="${breakdown.unresolvedPendencyScore} + ' / 100'">0 / 100</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-secondary" role="progressbar" th:style="'width: ' + ${breakdown.unresolvedPendencyScore} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 p-2 bg-light rounded text-muted small" style="font-family: monospace;">
+                        Formula: Risk = 0.35 &times; Deadline + 0.30 &times; Blocked + 0.20 &times; Deficiency + 0.15 &times; Pendency
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explainable Contributing Reasons -->
+        <div class="card-cm">
+            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-card-checklist text-primary"></i> Contributing Explanations &amp; Risk Triggers
+            </h6>
+            <ul class="list-group list-group-flush mb-0">
+                <li th:each="factor : ${breakdown.contributingFactors}" class="list-group-item d-flex align-items-center gap-2 py-3">
+                    <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                    <span th:text="${factor}">Factor reason</span>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

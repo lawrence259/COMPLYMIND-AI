@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Register Institution')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#create-inst-content}, 'institutions')}">
+    <div id="create-inst-content">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/institutions}">Institutions</a></li>
+                <li class="breadcrumb-item active">Register</li>
+            </ol>
+        </nav>
+
+        <div class="card-cm" style="max-width: 650px; margin: 0 auto;">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-building-add text-primary"></i> Register New Technical Institution
+            </h5>
+
+            <form th:action="@{/institutions/create}" th:object="${institution}" method="post">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Institution Code</label>
+                        <input type="text" th:field="*{code}" class="form-control" placeholder="e.g. NIST-PUNE" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">AICTE Permanent ID</label>
+                        <input type="text" th:field="*{aictePermanentId}" class="form-control" placeholder="e.g. 1-45678912">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Institution Name</label>
+                    <input type="text" th:field="*{name}" class="form-control" placeholder="e.g. Pune Institute of Computer Technology" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Institution Category / Type</label>
+                    <select th:field="*{type}" class="form-select" required>
+                        <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">State</label>
+                        <input type="text" th:field="*{state}" class="form-control" placeholder="Maharashtra">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">City</label>
+                        <input type="text" th:field="*{city}" class="form-control" placeholder="Pune">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Address</label>
+                    <textarea th:field="*{address}" class="form-control" rows="2" placeholder="Full postal campus address"></textarea>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Contact Email</label>
+                        <input type="email" th:field="*{contactEmail}" class="form-control" placeholder="principal@institution.edu">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Contact Phone</label>
+                        <input type="text" th:field="*{contactPhone}" class="form-control" placeholder="+91 20 12345678">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/institutions}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary fw-semibold">Register Institution</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

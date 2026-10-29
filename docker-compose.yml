@@ -1,0 +1,95 @@
+# ─────────────────────────────────────────────────────────────
+# COMPLYMIND AI — Docker Compose
+# Profiles:
+#   default (dev)  : H2 file DB, no external services required
+#   postgres       : PostgreSQL, recommended for production
+# ─────────────────────────────────────────────────────────────
+
+version: '3.9'
+
+# ── Shared service defaults ──────────────────────────────────
+x-app-defaults: &app-defaults
+  image: complymind-ai:latest
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  environment:
+    JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+
+# ════════════════════════════════════════════════════════════
+# DEV profile — H2 file database (no external deps)
+# Usage: docker compose up
+# ════════════════════════════════════════════════════════════
+services:
+
+  complymind-dev:
+    <<: *app-defaults
+    container_name: complymind-dev
+    profiles: [dev, ""]
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+    volumes:
+      - complymind_dev_data:/app/data
+      - complymind_uploads:/app/uploads/evidence
+
+  # ════════════════════════════════════════════════════════
+  # PRODUCTION profile — PostgreSQL
+  # Usage: docker compose --profile postgres up
+  # ════════════════════════════════════════════════════════
+
+  complymind-app:
+    <<: *app-defaults
+    container_name: complymind-app
+    profiles: [postgres]
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/complymind
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-complymind}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-complymind_secret}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      APP_SECURITY_JWT_SECRET: ${APP_SECURITY_JWT_SECRET:-change-this-in-prod-use-32-char-min}
+    volumes:
+      - complymind_uploads:/app/uploads/evidence
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: complymind-postgres
+    profiles: [postgres]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: complymind
+      POSTGRES_USER: ${POSTGRES_USER:-complymind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-complymind_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-complymind} -d complymind"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ── Named volumes ─────────────────────────────────────────
+volumes:
+  complymind_dev_data:
+    driver: local
+  complymind_uploads:
+    driver: local
+  postgres_data:
+    driver: local

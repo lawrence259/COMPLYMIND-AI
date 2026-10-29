@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In &amp; Account Recovery | COMPLYMIND AI</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/complymind.css}">
+</head>
+<body class="login-page">
+
+<!-- Ambient Glowing Cyber VFX Background -->
+<div class="login-bg-gradient"></div>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+<div class="glow-orb glow-orb-3"></div>
+
+<!-- 3D Flip Architecture Container -->
+<div class="login-flip-wrapper">
+    <div class="login-flip-card" id="authFlipCard">
+
+        <!-- ========================================================
+             FRONT FACE: SECURE SIGN IN
+             ======================================================== -->
+        <div class="flip-face-front">
+            <div class="text-center mb-4">
+                <div class="login-shield-icon">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h3 class="login-title">COMPLYMIND AI</h3>
+            </div>
+
+            <!-- Flash & Error alerts -->
+            <div th:if="${param.error}" class="alert alert-danger py-2 small d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <div>Invalid credentials. Please verify your username and password.</div>
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success py-2 small d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-check-circle-fill"></i>
+                <div>You have been successfully signed out.</div>
+            </div>
+            <div th:if="${successMessage}" class="alert alert-success py-2 small d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-check-circle-fill"></i>
+                <div th:text="${successMessage}"></div>
+            </div>
+
+            <div id="frontDynamicAlert" class="alert d-none py-2 small align-items-center gap-2 mb-3"></div>
+
+            <form th:action="@{/login}" method="post" id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Username or Institutional Email</label>
+                    <div class="input-group cm-input-group">
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                        <input type="text" name="username" id="loginUsernameInput" class="form-control" placeholder="Enter username" required autofocus>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label small fw-semibold mb-0">Password</label>
+                        <button type="button" class="btn p-0 border-0 text-primary small fw-semibold" onclick="flipToRecovery('password')" style="font-size:0.8rem; background:none;">
+                            Forgot password?
+                        </button>
+                    </div>
+                    <div class="input-group cm-input-group">
+                        <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                        <input type="password" name="password" id="loginPasswordInput" class="form-control" placeholder="Enter password" required>
+                        <button class="input-group-text bg-transparent border-start-0 text-muted" type="button" onclick="togglePasswordVisibility('loginPasswordInput', this)" tabindex="-1">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button type="button" class="btn p-0 border-0 text-secondary small" onclick="flipToRecovery('username')" style="font-size:0.8rem; background:none;">
+                        <i class="bi bi-question-circle me-1"></i>Forgot username?
+                    </button>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In Securely
+                </button>
+            </form>
+
+            <!-- Quick Autofill Credentials for Testing & Jury Demos -->
+            <div class="mt-3 p-2 rounded-3" style="background: rgba(30, 41, 59, 0.04); border: 1px dashed rgba(99, 102, 241, 0.3);">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">DEFAULT &amp; DEMO LOGINS</span>
+                    <span class="badge bg-primary-subtle text-primary" style="font-size: 0.65rem;">1-Click Autofill</span>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.73rem;" onclick="quickFill('admin', 'Admin@123')">
+                        <i class="bi bi-shield-check me-1"></i><strong>admin</strong> / Admin@123
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.73rem;" onclick="quickFill('selvam', 'Admin@123')">
+                        <i class="bi bi-person me-1"></i><strong>selvam</strong> / Admin@123
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-3 pt-2 border-top text-center text-muted" style="font-size:0.75rem;">
+                <div>BCrypt Hashing &bull; Role-Based Authorization</div>
+                <div class="mt-2 d-flex justify-content-center gap-2">
+                    <a th:href="@{/setup}" class="text-decoration-none text-muted">Initial administrator setup &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================
+             BACK FACE: IN-PAGE ACCOUNT RECOVERY HUB (VFX)
+             ======================================================== -->
+        <div class="flip-face-back">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <button type="button" class="btn-flip-back" onclick="flipToLogin()">
+                    <i class="bi bi-arrow-left"></i> Sign In
+                </button>
+                <div class="small fw-bold text-muted text-uppercase" style="font-size:0.7rem; letter-spacing:1px;">
+                    Account Recovery
+                </div>
+            </div>
+
+            <!-- Recovery Mode Switch Tabs -->
+            <div class="recovery-nav-tabs">
+                <button type="button" class="recovery-tab-btn active" id="tabBtnPassword" onclick="switchRecoveryTab('password')">
+                    <i class="bi bi-key me-1"></i> Change Password
+                </button>
+                <button type="button" class="recovery-tab-btn" id="tabBtnUsername" onclick="switchRecoveryTab('username')">
+                    <i class="bi bi-person-badge me-1"></i> Find Username
+                </button>
+            </div>
+
+            <div id="recoveryAlert" class="alert d-none py-2 small align-items-center gap-2 mb-3"></div>
+
+            <!-- ----------------------------------------------------
+                 PANEL 1: RESET PASSWORD (IN-PAGE MULTI-STEP)
+                 ---------------------------------------------------- -->
+            <div id="panelPasswordRecovery">
+                <!-- Step 1: Request Code / Token -->
+                <div id="pwStep1">
+                    <p class="text-muted small mb-3">
+                        Enter your username or registered email. We'll dispatch a 30-minute verification token via Gmail SMTP.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Account Identifier</label>
+                        <div class="input-group cm-input-group">
+                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                            <input type="text" id="recoveryIdentifier" class="form-control" placeholder="Username or email (e.g. admin)">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-semibold" id="btnRequestCode" onclick="handleRequestResetCode()">
+                        <i class="bi bi-send-fill me-1"></i> Send Verification Code
+                    </button>
+                </div>
+
+                <!-- Step 2: Enter Token & Set New Password (In-Page) -->
+                <div id="pwStep2" class="d-none">
+                    <div class="p-2 bg-light border rounded mb-3 small d-flex justify-content-between align-items-center">
+                        <span class="text-muted" id="recoveryEmailHint">Token dispatched</span>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="resetPwSteps()">Change User</button>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Verification Code / Token</label>
+                        <div class="input-group cm-input-group">
+                            <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
+                            <input type="text" id="recoveryTokenInput" class="form-control font-monospace" placeholder="Paste verification token">
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">New Password</label>
+                        <div class="input-group cm-input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" id="recoveryNewPassword" class="form-control" placeholder="Min 6 characters">
+                            <button class="input-group-text bg-transparent border-start-0 text-muted" type="button" onclick="togglePasswordVisibility('recoveryNewPassword', this)">
+                                <i class="bi bi-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="password-strength-bar mb-1">
+                            <div class="password-strength-fill" id="recoveryStrengthFill"></div>
+                        </div>
+                        <div class="small text-muted" id="recoveryStrengthLabel" style="font-size:0.72rem;">Password complexity</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Confirm New Password</label>
+                        <div class="input-group cm-input-group">
+                            <span class="input-group-text"><i class="bi bi-check2-square"></i></span>
+                            <input type="password" id="recoveryConfirmPassword" class="form-control" placeholder="Re-enter new password">
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-success w-100 py-2 fw-semibold" id="btnUpdatePassword" onclick="handleUpdatePassword()">
+                        <i class="bi bi-check2-circle me-1"></i> Update &amp; Save Password
+                    </button>
+                </div>
+            </div>
+
+            <!-- ----------------------------------------------------
+                 PANEL 2: RECOVER USERNAME (IN-PAGE)
+                 ---------------------------------------------------- -->
+            <div id="panelUsernameRecovery" class="d-none">
+                <p class="text-muted small mb-3">
+                    Forgot your username? Enter your registered institutional email to look up your account.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Registered Institutional Email</label>
+                    <div class="input-group cm-input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                        <input type="email" id="recoveryEmailInput" class="form-control" placeholder="e.g. admin@complymind.ai">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary w-100 py-2 fw-semibold mb-3" id="btnFindUsername" onclick="handleFindUsername()">
+                    <i class="bi bi-search me-1"></i> Retrieve My Username
+                </button>
+
+                <!-- Result Box -->
+                <div id="usernameResultBox" class="d-none text-center p-3 bg-light border rounded">
+                    <div class="text-muted small mb-1">Your registered username is:</div>
+                    <div class="badge-username-found mb-2" id="foundUsernameText">username</div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="useFoundUsername()">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Use &amp; Sign In
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-2 border-top text-center text-muted" style="font-size:0.72rem;">
+                Live Gmail SMTP Integration &bull; Powered by COMPLYMIND AI
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Toggle 3D Flip
+function flipToRecovery(mode = 'password') {
+    const card = document.getElementById('authFlipCard');
+    card.classList.add('is-flipped');
+    switchRecoveryTab(mode);
+}
+
+function flipToLogin() {
+    const card = document.getElementById('authFlipCard');
+    card.classList.remove('is-flipped');
+    hideAlert('recoveryAlert');
+}
+
+// Switch between Password Recovery and Username Retrieval tabs
+function switchRecoveryTab(tab) {
+    const tabPass = document.getElementById('tabBtnPassword');
+    const tabUser = document.getElementById('tabBtnUsername');
+    const panelPass = document.getElementById('panelPasswordRecovery');
+    const panelUser = document.getElementById('panelUsernameRecovery');
+
+    hideAlert('recoveryAlert');
+
+    if (tab === 'password') {
+        tabPass.classList.add('active');
+        tabUser.classList.remove('active');
+        panelPass.classList.remove('d-none');
+        panelUser.classList.add('d-none');
+    } else {
+        tabUser.classList.add('active');
+        tabPass.classList.remove('active');
+        panelUser.classList.remove('d-none');
+        panelPass.classList.add('d-none');
+    }
+}
+
+// Password visibility toggle
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye-slash';
+    }
+}
+
+// Helpers for alerts
+function showAlert(elementId, message, type = 'danger') {
+    const el = document.getElementById(elementId);
+    el.className = `alert alert-${type} py-2 small d-flex align-items-center gap-2 mb-3`;
+    const icon = type === 'success' ? 'bi-check-circle-fill' : (type === 'info' ? 'bi-info-circle-fill' : 'bi-exclamation-circle-fill');
+    el.innerHTML = `<i class="bi ${icon}"></i><div>${message}</div>`;
+    el.classList.remove('d-none');
+}
+
+function hideAlert(elementId) {
+    const el = document.getElementById(elementId);
+    el.classList.add('d-none');
+    el.innerHTML = '';
+}
+
+// --------------------------------------------------------------------
+// AJAX HANDLERS (IN-PAGE REST VERIFICATION)
+// --------------------------------------------------------------------
+
+// 1. Request Password Reset Code
+async function handleRequestResetCode() {
+    const identifier = document.getElementById('recoveryIdentifier').value.trim();
+    if (!identifier) {
+        showAlert('recoveryAlert', 'Please enter your username or registered email.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnRequestCode');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+    hideAlert('recoveryAlert');
+
+    try {
+        const response = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier: identifier })
+        });
+        const res = await response.json();
+
+        if (res.success && res.data) {
+            const data = res.data;
+            document.getElementById('pwStep1').classList.add('d-none');
+            document.getElementById('pwStep2').classList.remove('d-none');
+
+            // Pre-fill token if generated
+            if (data.token) {
+                document.getElementById('recoveryTokenInput').value = data.token;
+            }
+
+            const msg = data.liveEmailSent 
+                ? `Verification code dispatched via Gmail to ${data.maskedEmail}.`
+                : `Verification token generated for ${data.maskedEmail} (pre-filled below).`;
+            showAlert('recoveryAlert', msg, 'success');
+            document.getElementById('recoveryEmailHint').innerText = `Sent to ${data.maskedEmail}`;
+        } else {
+            showAlert('recoveryAlert', res.message || 'Unable to find an account matching that identifier.', 'danger');
+        }
+    } catch (err) {
+        showAlert('recoveryAlert', 'Network or connection error. Please try again.', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Send Verification Code';
+    }
+}
+
+function resetPwSteps() {
+    document.getElementById('pwStep1').classList.remove('d-none');
+    document.getElementById('pwStep2').classList.add('d-none');
+    hideAlert('recoveryAlert');
+}
+
+// 2. Complete Password Update on the same page
+async function handleUpdatePassword() {
+    const token = document.getElementById('recoveryTokenInput').value.trim();
+    const newPassword = document.getElementById('recoveryNewPassword').value;
+    const confirmPassword = document.getElementById('recoveryConfirmPassword').value;
+
+    if (!token) {
+        showAlert('recoveryAlert', 'Please enter the verification code / token.', 'warning');
+        return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+        showAlert('recoveryAlert', 'New password must be at least 6 characters.', 'warning');
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        showAlert('recoveryAlert', 'New passwords do not match.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnUpdatePassword');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating password...';
+    hideAlert('recoveryAlert');
+
+    try {
+        const response = await fetch('/api/auth/verify-and-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, newPassword, confirmPassword })
+        });
+        const res = await response.json();
+
+        if (res.success) {
+            showAlert('recoveryAlert', 'Password updated successfully! Flipping to Sign In...', 'success');
+            
+            // Auto flip back to front with prefilled username after 1.5 seconds
+            setTimeout(() => {
+                const identifier = document.getElementById('recoveryIdentifier').value.trim();
+                if (identifier && !identifier.includes('@')) {
+                    document.getElementById('loginUsernameInput').value = identifier;
+                }
+                document.getElementById('loginPasswordInput').value = '';
+                document.getElementById('loginPasswordInput').focus();
+                flipToLogin();
+                showAlert('frontDynamicAlert', 'Password updated successfully! Please sign in with your new password.', 'success');
+                resetPwSteps();
+            }, 1400);
+        } else {
+            showAlert('recoveryAlert', res.message || 'Failed to update password. Token may be invalid or expired.', 'danger');
+        }
+    } catch (err) {
+        showAlert('recoveryAlert', 'Network error. Please try again.', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update &amp; Save Password';
+    }
+}
+
+// 3. Retrieve Username
+async function handleFindUsername() {
+    const email = document.getElementById('recoveryEmailInput').value.trim();
+    if (!email) {
+        showAlert('recoveryAlert', 'Please enter your registered email.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnFindUsername');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Searching...';
+    hideAlert('recoveryAlert');
+    document.getElementById('usernameResultBox').classList.add('d-none');
+
+    try {
+        const response = await fetch('/api/auth/forgot-username', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const res = await response.json();
+
+        if (res.success && res.data) {
+            document.getElementById('foundUsernameText').innerText = res.data.username;
+            document.getElementById('usernameResultBox').classList.remove('d-none');
+            showAlert('recoveryAlert', 'Username located! A reminder was also logged for your Gmail account.', 'success');
+        } else {
+            showAlert('recoveryAlert', res.message || 'No registered account found with that email address.', 'danger');
+        }
+    } catch (err) {
+        showAlert('recoveryAlert', 'Network error. Please try again.', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-search me-1"></i> Retrieve My Username';
+    }
+}
+
+function useFoundUsername() {
+    const username = document.getElementById('foundUsernameText').innerText;
+    document.getElementById('loginUsernameInput').value = username;
+    document.getElementById('loginPasswordInput').focus();
+    flipToLogin();
+    showAlert('frontDynamicAlert', `Username '${username}' filled in! Please enter your password to sign in.`, 'info');
+}
+
+function quickFill(username, password) {
+    document.getElementById('loginUsernameInput').value = username;
+    document.getElementById('loginPasswordInput').value = password;
+    showAlert('frontDynamicAlert', `Credentials autofilled for '${username}'. Click 'Sign In Securely' to continue.`, 'info');
+}
+
+// Password strength calculation
+const passInput = document.getElementById('recoveryNewPassword');
+const fill = document.getElementById('recoveryStrengthFill');
+const label = document.getElementById('recoveryStrengthLabel');
+passInput?.addEventListener('input', function() {
+    const v = this.value;
+    let score = 0;
+    if (v.length >= 6) score++;
+    if (v.length >= 10) score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const pct = (score / 5) * 100;
+    fill.style.width = pct + '%';
+    const colors = ['#be123c','#f97316','#f59e0b','#15803d','#15803d'];
+    const labels = ['Very Weak','Weak','Fair','Good','Strong'];
+    fill.style.backgroundColor = colors[score - 1] || '#e2e8f0';
+    label.textContent = labels[score - 1] || 'Password complexity';
+});
+</script>
+</body>
+</html>

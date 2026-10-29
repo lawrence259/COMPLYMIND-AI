@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Compliance Applications')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#app-list-content}, 'applications')}">
+    <div id="app-list-content">
+
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="page-title mb-1">Compliance Applications</h4>
+                <p class="text-muted small mb-0">Search, monitor, and advance institutional compliance submissions</p>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="btn-group btn-group-sm">
+                    <a th:href="@{/export/applications.csv}" class="btn btn-outline-secondary" title="Export as CSV">
+                        <i class="bi bi-filetype-csv"></i> CSV
+                    </a>
+                    <a th:href="@{/export/applications.xlsx}" class="btn btn-outline-secondary" title="Export as Excel">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </a>
+                </div>
+                <a th:href="@{/applications/new}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg"></i> Register New Application
+                </a>
+            </div>
+        </div>
+
+        <div class="card-cm">
+            <div th:if="${applications.empty}" class="empty-state py-5">
+                <div class="empty-state-icon"><i class="bi bi-folder2-open"></i></div>
+                <h5>No Compliance Applications Found</h5>
+                <p class="text-muted small">Register an institution and start your first compliance application.</p>
+                <a th:href="@{/applications/new}" class="btn btn-primary btn-sm">Register Application</a>
+            </div>
+
+            <div th:unless="${applications.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Application #</th>
+                            <th>Institution</th>
+                            <th>Framework</th>
+                            <th>Academic Year</th>
+                            <th>Status</th>
+                            <th>Risk Score</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="app : ${applications.content}" class="table-row-hover">
+                            <td class="fw-semibold">
+                                <a th:href="@{'/applications/' + ${app.id}}" th:text="${app.applicationNumber}" class="text-decoration-none text-primary"></a>
+                                <span th:if="${app.demo}" class="demo-badge">DEMO</span>
+                            </td>
+                            <td th:text="${app.institution != null ? app.institution.name : 'N/A'}">Institution</td>
+                            <td class="small" th:text="${app.framework.code}">AICTE-APH-2026</td>
+                            <td th:text="${app.academicYear}">2026-27</td>
+                            <td>
+                                <span th:class="'badge-status badge-' + ${app.status}" th:text="${app.status}"></span>
+                            </td>
+                            <td>
+                                <span th:class="'risk-pill risk-' + ${app.riskBand}">
+                                    <span th:text="${app.riskScore}"></span> (<span th:text="${app.riskBand}"></span>)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{'/applications/' + ${app.id}}" class="btn btn-outline-secondary" title="View Application Details">
+                                        <i class="bi bi-eye"></i> Details
+                                    </a>
+                                    <a th:href="@{'/applications/' + ${app.id} + '/graph'}" class="btn btn-outline-primary" title="Ripple Dependency Graph">
+                                        <i class="bi bi-diagram-3"></i> Graph
+                                    </a>
+                                    <a th:href="@{'/applications/' + ${app.id} + '/risk'}" class="btn btn-outline-warning text-dark" title="Explainable Risk">
+                                        <i class="bi bi-shield-exclamation"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Pagination footer if multi-page -->
+                <div th:if="${applications.totalPages > 1}" class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <div class="text-muted small">
+                        Showing page <span th:text="${applications.number + 1}">1</span> of <span th:text="${applications.totalPages}">1</span>
+                        (<span th:text="${applications.totalElements}">0</span> total applications)
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <a th:if="${!applications.first}" th:href="@{/applications(page=${applications.number - 1})}" class="btn btn-outline-secondary">Previous</a>
+                        <a th:if="${!applications.last}" th:href="@{/applications(page=${applications.number + 1})}" class="btn btn-outline-secondary">Next</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

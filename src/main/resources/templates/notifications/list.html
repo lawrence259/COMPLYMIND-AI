@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Notifications & Alerts')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#notif-content}, 'notifications')}">
+    <div id="notif-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">In-App Notification &amp; Alert Center</h4>
+                <p class="text-muted small mb-0">Escalations, overdue reminders, and task assignments</p>
+            </div>
+            <form th:action="@{/notifications/mark-all-read}" method="post">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-check2-all"></i> Mark All as Read
+                </button>
+            </form>
+        </div>
+
+        <div class="card-cm">
+            <div th:if="${notifications.empty}" class="empty-state py-5">
+                <div class="empty-state-icon"><i class="bi bi-bell-slash"></i></div>
+                <h5>No Notifications</h5>
+                <p class="text-muted small">You are all caught up!</p>
+            </div>
+
+            <div th:unless="${notifications.empty}" class="list-group list-group-flush">
+                <div th:each="n : ${notifications.content}"
+                     class="list-group-item d-flex justify-content-between align-items-center px-3 py-3"
+                     th:classappend="${!n.read ? 'bg-light' : ''}">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi fs-4 mt-1"
+                           th:classappend="${n.type.name() == 'ESCALATION' ? 'bi-exclamation-octagon text-danger' : (n.type.name() == 'TASK_ASSIGNED' ? 'bi-tools text-primary' : 'bi-bell text-warning')}"></i>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="fw-bold mb-0 text-dark" th:text="${n.title}">Notification Title</h6>
+                                <span th:if="${!n.read}" class="badge bg-primary" style="font-size:0.65rem;">NEW</span>
+                            </div>
+                            <p class="mb-1 small text-secondary" th:text="${n.message}">Message</p>
+                            <span class="text-muted small" style="font-size:0.75rem;" th:text="${#temporals.format(n.createdAt, 'dd MMM yyyy HH:mm')}">Date</span>
+                        </div>
+                    </div>
+                    <div>
+                        <form th:if="${!n.read}" th:action="@{'/notifications/' + ${n.id} + '/read'}" method="post">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as Read">
+                                <i class="bi bi-check2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

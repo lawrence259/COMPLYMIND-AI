@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('New Compliance Application')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#create-app-content}, 'applications')}">
+    <div id="create-app-content">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item active">Create Application</li>
+            </ol>
+        </nav>
+
+        <div class="card-cm" style="max-width: 650px; margin: 0 auto;">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-file-earmark-plus text-primary me-1"></i> Register Compliance Application
+                </h5>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">AICTE Approval Workflow</span>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger py-2 mb-3 small" role="alert">
+                <i class="bi bi-exclamation-octagon-fill me-1"></i> <span th:text="${errorMessage}"></span>
+            </div>
+
+            <form th:action="@{/applications/create}" method="post" id="createAppForm"
+                  onsubmit="if(this.checkValidity()){ document.getElementById('submitBtn').disabled = true; document.getElementById('submitSpinner').classList.remove('d-none'); }">
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">
+                        Institution <span class="text-danger">*</span>
+                    </label>
+                    <select name="institutionId" class="form-select" required>
+                        <option value="">-- Select Institution --</option>
+                        <option th:each="inst : ${institutions}" th:value="${inst.id}" th:text="${inst.name} + ' (' + ${inst.code} + ')'"></option>
+                    </select>
+                    <div class="invalid-feedback small">Please select an affiliated institution.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">
+                        Applicable Compliance Framework <span class="text-danger">*</span>
+                    </label>
+                    <select name="frameworkId" class="form-select" required>
+                        <option value="">-- Select Compliance Framework --</option>
+                        <option th:each="fw : ${frameworks}" th:value="${fw.id}" th:text="${fw.name} + ' (' + ${fw.cycleYear} + ')'"></option>
+                    </select>
+                    <div class="form-text small text-muted">
+                        <i class="bi bi-info-circle"></i> Attaches framework statutory requirements and dependency constraints automatically upon creation.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">
+                        Application Title / Approval Category <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="title" class="form-control"
+                           placeholder="e.g. Annual Extension of Approval (EoA) 2026-27" required maxlength="255">
+                    <div class="invalid-feedback small">Title is required.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold">
+                        Academic Cycle / Year <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="academicYear" class="form-control"
+                           placeholder="2026-2027" value="2026-2027" required maxlength="32">
+                    <div class="invalid-feedback small">Academic cycle is required.</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <a th:href="@{/applications}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" id="submitBtn" class="btn btn-primary btn-sm fw-semibold">
+                        <span id="submitSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                        <i class="bi bi-check-lg"></i> Register Application &amp; Attach Requirements
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

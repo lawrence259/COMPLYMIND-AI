@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Institutions')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#inst-list-content}, 'institutions')}">
+    <div id="inst-list-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Registered Institutions</h4>
+                <p class="text-muted small mb-0">Institutions managing AICTE compliance and approval workflows</p>
+            </div>
+            <a th:href="@{/institutions/new}" class="btn btn-primary btn-sm">
+                <i class="bi bi-building-add"></i> Register Institution
+            </a>
+        </div>
+
+        <div class="card-cm">
+            <div th:if="${institutions.empty}" class="empty-state py-5">
+                <div class="empty-state-icon"><i class="bi bi-building-x"></i></div>
+                <h5>No Registered Institutions</h5>
+                <p class="text-muted small">Register an institution to begin managing compliance.</p>
+                <a th:href="@{/institutions/new}" class="btn btn-primary btn-sm">Register Institution</a>
+            </div>
+
+            <div th:unless="${institutions.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Institution Name</th>
+                            <th>Type</th>
+                            <th>AICTE Permanent ID</th>
+                            <th>State / City</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="inst : ${institutions.content}">
+                            <td class="fw-bold">
+                                <span th:text="${inst.code}"></span>
+                                <span th:if="${inst.demo}" class="badge bg-warning text-dark" style="font-size:0.65rem;">DEMO</span>
+                            </td>
+                            <td class="fw-semibold text-dark" th:text="${inst.name}">Institution Name</td>
+                            <td><span class="badge bg-light text-dark border" th:text="${inst.type}">Type</span></td>
+                            <td th:text="${inst.aictePermanentId ?: 'N/A'}">ID</td>
+                            <td th:text="${inst.city} + ', ' + ${inst.state}">City, State</td>
+                            <td>
+                                <a th:href="@{'/institutions/' + ${inst.id}}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

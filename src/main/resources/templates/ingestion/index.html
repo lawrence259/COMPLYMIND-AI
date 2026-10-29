@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Regulatory Data Ingestion Pipeline')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#ingestion-content}, 'ingestion')}">
+    <div id="ingestion-content">
+
+        <!-- Header -->
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="page-title mb-1">
+                    <i class="bi bi-cloud-arrow-down text-primary me-2"></i>Public &amp; Open-Source Data Ingestion Pipeline
+                </h4>
+                <p class="text-muted small mb-0">
+                    Import, validate, attribute, and upsert official AICTE regulatory handbooks and public technical education datasets
+                </p>
+            </div>
+            <form th:action="@{/admin/ingest/official-catalog}" method="post">
+                <button type="submit" class="btn btn-success btn-sm fw-semibold">
+                    <i class="bi bi-shield-check"></i> Sync Official AICTE Statutory Catalog
+                </button>
+            </form>
+        </div>
+
+        <!-- Ingestion Result Banner if present -->
+        <div th:if="${ingestResult}" class="card-cm mb-4 border-primary">
+            <h6 class="fw-bold text-primary mb-2 border-bottom pb-2">
+                <i class="bi bi-journal-check"></i> Latest Ingestion Audit Summary: <span th:text="${ingestResult.datasetName}"></span>
+            </h6>
+            <div class="row g-3 small">
+                <div class="col-md-3">
+                    <strong>Source URL:</strong><br>
+                    <a th:href="${ingestResult.sourceUrl}" target="_blank" class="text-truncate d-block" th:text="${ingestResult.sourceUrl}"></a>
+                </div>
+                <div class="col-md-2">
+                    <strong>Classification:</strong><br>
+                    <span class="badge bg-primary text-white" th:text="${ingestResult.classification}"></span>
+                </div>
+                <div class="col-md-7">
+                    <strong>Record Counts:</strong><br>
+                    <span class="badge bg-success" th:text="${ingestResult.addedCount} + ' Added'"></span>
+                    <span class="badge bg-info text-dark" th:text="${ingestResult.updatedCount} + ' Updated'"></span>
+                    <span class="badge bg-secondary" th:text="${ingestResult.skippedCount} + ' Skipped'"></span>
+                    <span class="badge bg-danger" th:text="${ingestResult.rejectedCount} + ' Rejected'"></span>
+                </div>
+            </div>
+
+            <div th:if="${!ingestResult.errors.empty}" class="mt-3">
+                <div class="text-danger small fw-semibold">Validation Errors / Rejections:</div>
+                <ul class="list-unstyled text-danger small mb-0 ps-2 border-start border-danger">
+                    <li th:each="err : ${ingestResult.errors}" th:text="${err}"></li>
+                </ul>
+            </div>
+
+            <div th:if="${!ingestResult.changeSummary.empty}" class="mt-3">
+                <div class="text-muted small fw-semibold">Processed Record Sample:</div>
+                <ul class="list-unstyled text-muted small mb-0 ps-2 border-start">
+                    <li th:each="change, stat : ${ingestResult.changeSummary}" th:if="${stat.index < 5}" th:text="${change}"></li>
+                    <li th:if="${ingestResult.changeSummary.size() > 5}" class="text-primary italic">
+                        ... and <span th:text="${ingestResult.changeSummary.size() - 5}"></span> more records.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Left: Bulk Institution Ingestion Form -->
+            <div class="col-lg-6">
+                <div class="card-cm h-100">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-file-earmark-spreadsheet text-success me-1"></i> Ingest Institution Directory (CSV)
+                    </h6>
+                    <p class="text-muted small">
+                        Upload public datasets of technical colleges, universities, and polytechnics. Supports automated duplicate detection and upsert by institutional code.
+                    </p>
+
+                    <form th:action="@{/admin/ingest/institutions}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">CSV File <span class="text-danger">*</span></label>
+                            <input type="file" name="file" class="form-control form-control-sm" accept=".csv" required>
+                            <div class="form-text small">
+                                Header schema: <code>code,name,type,aictePermanentId,state,city,address,contactEmail,contactPhone</code>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Public Source URL / Attribution</label>
+                            <input type="url" name="sourceUrl" class="form-control form-control-sm"
+                                   placeholder="e.g. https://data.gov.in/resource/technical-institutions">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Data Provenance Classification</label>
+                            <select name="classification" class="form-select form-select-sm">
+                                <option th:each="c : ${classifications}" th:value="${c}" th:text="${c}"
+                                        th:selected="${c.name() == 'PUBLIC_SOURCE_UNVERIFIED'}"></option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+                            <i class="bi bi-upload"></i> Process &amp; Ingest CSV Dataset
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Approved Regulatory Sources Catalog -->
+            <div class="col-lg-6">
+                <div class="card-cm h-100">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-bookmark-check text-info me-1"></i> Configured Regulatory Public Sources
+                    </h6>
+                    <div class="list-group list-group-flush small">
+                        <div class="list-group-item px-0">
+                            <div class="fw-semibold text-dark">
+                                <i class="bi bi-file-earmark-pdf text-danger"></i> AICTE Approval Process Handbook (APH 2024–2027)
+                            </div>
+                            <div class="text-muted small mb-1">
+                                Primary statutory norms for land, built-up area, student-faculty ratios, and compliance mandates.
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">OFFICIAL_SOURCE_VERIFIED</span>
+                                <a th:href="${officialUrl}" target="_blank" class="small text-decoration-none">Source Document &rarr;</a>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item px-0">
+                            <div class="fw-semibold text-dark">
+                                <i class="bi bi-globe text-primary"></i> Government Open Data Platform (Data.gov.in)
+                            </div>
+                            <div class="text-muted small mb-1">
+                                Ministry of Education / AICTE technical institution directory and sanctioned intake figures.
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info-subtle text-info border border-info-subtle">PUBLIC_SOURCE_UNVERIFIED</span>
+                                <a href="https://data.gov.in/" target="_blank" class="small text-decoration-none">Open Data Portal &rarr;</a>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item px-0">
+                            <div class="fw-semibold text-dark">
+                                <i class="bi bi-newspaper text-warning"></i> Press Information Bureau (PIB) Regulatory Gazettes
+                            </div>
+                            <div class="text-muted small mb-1">
+                                Gazette notifications on AICTE handbook release (PRID: 1983013) and amendments.
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-secondary-subtle text-secondary border">OFFICIAL_GAZETTE</span>
+                                <a href="https://www.pib.gov.in/Pressreleaseshare.aspx?PRID=1983013&lang=2&reg=48" target="_blank" class="small text-decoration-none">PIB Notice &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

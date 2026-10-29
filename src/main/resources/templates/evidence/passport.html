@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Evidence Passport')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#passport-content}, 'applications')}">
+    <div id="passport-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Evidence Passport &amp; Lifecycle Ledger</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    Evidence Passport &mdash; <span class="text-primary" th:text="${currApp.applicationNumber}"></span>
+                </h4>
+                <p class="text-muted small mb-0">Complete historical dossier of document versions, checksums, review outcomes, and audit logs</p>
+            </div>
+            <a th:href="@{'/applications/' + ${currApp.id}}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Application Overview
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Document Version Dossier -->
+            <div class="col-lg-7">
+                <div class="card-cm mb-4">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-collection text-primary"></i> Uploaded Evidence Dossier &amp; Versions
+                    </h6>
+
+                    <div th:if="${documents.empty}" class="text-muted text-center py-4 small">
+                        No evidence documents uploaded for this application yet.
+                    </div>
+
+                    <div th:unless="${documents.empty}" class="table-responsive">
+                        <table class="table table-cm">
+                            <thead>
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Requirement</th>
+                                    <th>Version</th>
+                                    <th>SHA-256 Checksum</th>
+                                    <th>Review Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="doc : ${documents}">
+                                    <td>
+                                        <div class="fw-semibold" th:text="${doc.originalFilename}">Doc.pdf</div>
+                                        <div class="text-muted small" th:text="${#temporals.format(doc.createdAt, 'dd MMM yyyy HH:mm')}">Date</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border" th:text="${doc.applicationRequirement.requirement.code}">REQ-01</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary" th:text="'v' + ${doc.versionNumber}">v1</span>
+                                    </td>
+                                    <td>
+                                        <code class="small text-truncate d-inline-block" style="max-width: 120px;" th:text="${doc.sha256Checksum}">checksum</code>
+                                    </td>
+                                    <td>
+                                        <span th:class="'badge-status badge-' + ${doc.reviewStatus}" th:text="${doc.reviewStatus}"></span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/evidence/review/' + ${doc.id}}" class="btn btn-sm btn-outline-primary" title="Review Document">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Immutable Audit Trail Timeline -->
+            <div class="col-lg-5">
+                <div class="card-cm">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-clock-history text-secondary"></i> Application Audit Trail
+                    </h6>
+
+                    <div th:if="${auditHistory.empty}" class="text-muted text-center py-4 small">
+                        No audit events recorded for this application.
+                    </div>
+
+                    <div th:unless="${auditHistory.empty}" class="timeline">
+                        <div th:each="event : ${auditHistory}" class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="fw-bold small text-dark" th:text="${event.action}">ACTION</div>
+                            <div class="text-muted small" style="font-size: 0.75rem;">
+                                <span th:text="${event.actorUsername}">actor</span> (<span th:text="${event.actorRole}">role</span>) &bull;
+                                <span th:text="${#temporals.format(event.createdAt, 'dd MMM yyyy HH:mm:ss')}">Timestamp</span>
+                            </div>
+                            <div class="small mt-1 text-secondary" th:text="${event.details}">Details</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

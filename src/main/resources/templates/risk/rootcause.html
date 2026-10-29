@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Root-Cause Investigator')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#rootcause-content}, 'applications')}">
+    <div id="rootcause-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Root-Cause Investigator</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Root-Cause Issue Groupings</h4>
+                <p class="text-muted small mb-0">Trace clusters of downstream compliance failures to their true originating blocker</p>
+            </div>
+            <a th:href="@{'/applications/' + ${currApp.id} + '/graph'}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-diagram-3"></i> Interactive Graph
+            </a>
+        </div>
+
+        <!-- If no root causes found -->
+        <div th:if="${rootCauses.empty}" class="card-cm text-center py-5">
+            <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
+            <h5 class="fw-bold">No Root Blockers Detected</h5>
+            <p class="text-muted small">All mandatory prerequisites are currently in non-blocking status.</p>
+        </div>
+
+        <!-- List of Grouped Root Causes -->
+        <div th:unless="${rootCauses.empty}">
+            <div th:each="group : ${rootCauses}" class="card-cm mb-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger">ROOT ISSUE</span>
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <span th:text="${group.rootRequirementCode}">REQ-01</span> &mdash;
+                            <span th:text="${group.rootRequirementTitle}">Requirement Title</span>
+                        </h5>
+                    </div>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">
+                        <strong th:text="${group.affectedRequirementsCount}">0</strong> Downstream Requirements Blocked
+                    </span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <div class="small fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Originating Fault:</div>
+                            <div class="small text-dark" th:text="${group.rootIssueReason}">Root issue reason</div>
+                            <div class="mt-2 small text-muted">
+                                <strong>Resolution Status:</strong> <span class="badge bg-secondary" th:text="${group.resolutionStatus}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <div class="small fw-bold text-success mb-1"><i class="bi bi-lightbulb-fill"></i> Recommended Corrective Action:</div>
+                            <div class="small text-dark mb-2" th:text="${group.suggestedCorrectiveAction}">Suggested action</div>
+                            <a th:href="@{'/corrective-actions/new?applicationId=' + ${currApp.id} + '&rootIssue=' + ${group.rootRequirementCode} + ': ' + ${group.rootRequirementTitle}}"
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-tools"></i> Create Recovery Task for This Root Cause
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Downstream affected paths -->
+                <h6 class="fw-bold small text-muted text-uppercase mb-2">Downstream Ripple Propagation Chain:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Affected Downstream Node</th>
+                                <th>Dependency Propagation Path</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="aff, iter : ${group.affectedRequirements}">
+                                <td th:text="${iter.count}">1</td>
+                                <td>
+                                    <span class="badge bg-danger text-white me-1">BLOCKED</span>
+                                    <strong th:text="${aff}">REQ-02</strong>
+                                </td>
+                                <td>
+                                    <code class="text-danger" th:text="${group.dependencyPaths[iter.index]}">REQ-01 -&gt; REQ-02</code>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

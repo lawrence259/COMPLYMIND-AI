@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Institution Details')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#inst-view-content}, 'institutions')}">
+    <div id="inst-view-content">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/institutions}">Institutions</a></li>
+                <li class="breadcrumb-item active" th:text="${institution.code}">NIST</li>
+            </ol>
+        </nav>
+
+        <div class="card-cm" style="max-width: 750px; margin: 0 auto;">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1 text-dark" th:text="${institution.name}">Name</h4>
+                    <span class="badge bg-light text-dark border" th:text="${institution.type}">TYPE</span>
+                    <span th:if="${institution.demo}" class="badge bg-warning text-dark">SYNTHETIC DEMO</span>
+                </div>
+                <a th:href="@{/institutions}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+
+            <table class="table table-sm table-borderless">
+                <tr>
+                    <td class="text-muted small" style="width: 180px;">Institution Code:</td>
+                    <td class="fw-bold" th:text="${institution.code}">CODE</td>
+                </tr>
+                <tr>
+                    <td class="text-muted small">AICTE Permanent ID:</td>
+                    <td th:text="${institution.aictePermanentId ?: 'N/A'}">ID</td>
+                </tr>
+                <tr>
+                    <td class="text-muted small">State &amp; City:</td>
+                    <td th:text="${institution.city} + ', ' + ${institution.state}">City, State</td>
+                </tr>
+                <tr>
+                    <td class="text-muted small">Campus Address:</td>
+                    <td th:text="${institution.address ?: 'N/A'}">Address</td>
+                </tr>
+                <tr>
+                    <td class="text-muted small">Contact Email:</td>
+                    <td th:text="${institution.contactEmail ?: 'N/A'}">Email</td>
+                </tr>
+                <tr>
+                    <td class="text-muted small">Contact Phone:</td>
+                    <td th:text="${institution.contactPhone ?: 'N/A'}">Phone</td>
+                </tr>
+                <tr>
+                    <td class="text-muted small">Registered At:</td>
+                    <td th:text="${#temporals.format(institution.createdAt, 'dd MMM yyyy HH:mm')}">Date</td>
+                </tr>
+            </table>
+
+            <div class="mt-4 pt-3 border-top">
+                <a th:href="@{/applications/new}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle"></i> Create Application for this Institution
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

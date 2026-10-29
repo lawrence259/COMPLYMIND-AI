@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Auto-Recovery Tasks')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#actions-list-content}, 'actions')}">
+    <div id="actions-list-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Auto-Recovery Planner &amp; Corrective Actions</h4>
+                <p class="text-muted small mb-0">Remediation tasks assigned to resolve compliance blockers</p>
+            </div>
+            <a th:href="@{/corrective-actions/new}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> Create Recovery Task
+            </a>
+        </div>
+
+        <div class="card-cm">
+            <div th:if="${actions.empty}" class="empty-state py-5">
+                <div class="empty-state-icon"><i class="bi bi-tools"></i></div>
+                <h5>No Corrective Action Tasks</h5>
+                <p class="text-muted small">No recovery tasks created yet.</p>
+                <a th:href="@{/corrective-actions/new}" class="btn btn-primary btn-sm">Create Corrective Action</a>
+            </div>
+
+            <div th:unless="${actions.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Task Title</th>
+                            <th>Application</th>
+                            <th>Root Issue</th>
+                            <th>Assigned To</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Action / Verification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="act : ${actions}">
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${act.title}">Task Title</div>
+                                <div class="text-muted small text-truncate" style="max-width: 250px;" th:text="${act.description}">Description</div>
+                            </td>
+                            <td>
+                                <a th:href="@{'/applications/' + ${act.application.id}}" class="text-decoration-none small" th:text="${act.application.applicationNumber}">APP-123</a>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle small" th:text="${act.rootIssue}">Root</span>
+                            </td>
+                            <td class="small" th:text="${act.assignedTo != null ? act.assignedTo.fullName : 'Unassigned'}">User</td>
+                            <td class="small" th:text="${#temporals.format(act.dueDate, 'dd MMM yyyy')}">Date</td>
+                            <td>
+                                <span class="badge" th:classappend="${act.priority.name() == 'CRITICAL' ? 'bg-danger' : (act.priority.name() == 'HIGH' ? 'bg-warning text-dark' : 'bg-secondary')}"
+                                      th:text="${act.priority}">MEDIUM</span>
+                            </td>
+                            <td>
+                                <span th:class="'badge-status badge-' + ${act.status}" th:text="${act.status}">OPEN</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                    <!-- Advance status modal or quick form -->
+                                    <form th:action="@{'/corrective-actions/' + ${act.id} + '/status'}" method="post" class="d-inline-flex gap-1">
+                                        <select name="status" class="form-select form-select-sm" style="width: auto;">
+                                            <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${st == act.status}"></option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Update Status">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Quick Verify Button if SUBMITTED_FOR_VERIFICATION -->
+                                    <form th:if="${act.status.name() == 'SUBMITTED_FOR_VERIFICATION'}"
+                                          th:action="@{'/corrective-actions/' + ${act.id} + '/verify'}" method="post" class="d-inline">
+                                        <input type="hidden" name="verified" value="true">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Verify Task Completion">
+                                            Verify
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

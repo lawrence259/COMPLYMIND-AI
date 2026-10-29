@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Compliance Rules')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#rules-list-content}, 'rules')}">
+    <div id="rules-list-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Configurable Compliance Rules Engine</h4>
+                <p class="text-muted small mb-0">Versioned statutory rules, verification statuses, and official AICTE source registry</p>
+            </div>
+            <a th:href="@{/rules/new}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> Add New Rule
+            </a>
+        </div>
+
+        <div class="card-cm">
+            <div th:if="${rules.empty}" class="empty-state py-5">
+                <div class="empty-state-icon"><i class="bi bi-journal-code"></i></div>
+                <h5>No Compliance Rules Found</h5>
+                <p class="text-muted small">No rules exist in the catalog. Add a rule or load the synthetic demo dataset.</p>
+                <a th:href="@{/rules/new}" class="btn btn-primary btn-sm">Create Rule</a>
+            </div>
+
+            <div th:unless="${rules.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Rule Code</th>
+                            <th>Rule Name &amp; Description</th>
+                            <th>Framework</th>
+                            <th>Required Evidence Type</th>
+                            <th>Validation Method</th>
+                            <th>Version</th>
+                            <th>Official Source &amp; Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="rule : ${rules}">
+                            <td>
+                                <span class="fw-bold text-dark" th:text="${rule.ruleCode}">RULE-01</span>
+                                <div th:if="${rule.demo}" class="badge bg-warning text-dark mt-1" style="font-size:0.65rem;">DEMO</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark" th:text="${rule.name}">Name</div>
+                                <div class="text-muted small" style="max-width: 320px;" th:text="${rule.description}">Description</div>
+                                <div th:if="${rule.reviewerNotes != null}" class="small text-secondary mt-1">
+                                    <em>Note: <span th:text="${rule.reviewerNotes}"></span></em>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${rule.framework.code}">Framework</span>
+                            </td>
+                            <td class="small" th:text="${rule.requiredEvidenceType}">PDF Deed</td>
+                            <td class="small" th:text="${rule.validationMethod}">Deed Stamp</td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="'v' + ${rule.version}">v1.0</span>
+                            </td>
+                            <td>
+                                <div th:if="${rule.verified}" class="badge bg-success text-white mb-1">
+                                    <i class="bi bi-check-circle"></i> VERIFIED OFFICIAL
+                                </div>
+                                <div th:unless="${rule.verified}" class="badge bg-secondary text-white mb-1">
+                                    <i class="bi bi-shield-slash"></i> UNVERIFIED / SYNTHETIC
+                                </div>
+                                <div th:if="${rule.sourceUrl != null}" class="small">
+                                    <a th:href="${rule.sourceUrl}" target="_blank" class="text-decoration-none">
+                                        <i class="bi bi-box-arrow-up-right"></i> <span th:text="${rule.sourceSection ?: 'Source Link'}"></span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

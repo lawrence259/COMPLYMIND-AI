@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('System Audit Trail')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#audit-list-content}, 'audit')}">
+    <div id="audit-list-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">System Audit &amp; Event Trail</h4>
+                <p class="text-muted small mb-0">Append-only operational history tracking state transitions and reviewer decisions</p>
+            </div>
+            <span class="badge bg-light text-dark border">
+                <i class="bi bi-lock-fill text-secondary"></i> Non-modifiable ledger
+            </span>
+        </div>
+
+        <div class="card-cm">
+            <div th:if="${events.empty}" class="empty-state py-5">
+                <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+                <h5>No Audit Events Recorded</h5>
+                <p class="text-muted small">Events will appear as actions occur.</p>
+            </div>
+
+            <div th:unless="${events.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Actor</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Entity Type &amp; ID</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ev : ${events.content}">
+                            <td class="small text-muted text-nowrap" th:text="${#temporals.format(ev.createdAt, 'dd MMM yyyy HH:mm:ss')}">Time</td>
+                            <td class="fw-semibold text-dark" th:text="${ev.actorUsername}">actor</td>
+                            <td><span class="badge bg-light text-dark border" th:text="${ev.actorRole}">role</span></td>
+                            <td><span class="badge bg-primary text-white" th:text="${ev.action}">action</span></td>
+                            <td class="small" th:text="${ev.entityType} + ' #' + ${ev.entityId}">Entity</td>
+                            <td class="small text-secondary" th:text="${ev.details}">Details</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

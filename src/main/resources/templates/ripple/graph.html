@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Compliance Ripple Engine')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#graph-content}, 'applications')}">
+    <div id="graph-content" th:with="currApp=${app != null ? app : application}">
+
+        <!-- Breadcrumb & Header -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Ripple Engine &amp; Dependency Graph</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    Compliance Ripple Engine &mdash;
+                    <span th:text="${currApp.institution != null ? currApp.institution.name : currApp.title}" class="text-primary"></span>
+                </h4>
+                <p class="text-muted small mb-0">
+                    Directed Acyclic Graph (DAG) analysis tracing downstream impact of unresolved prerequisites
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <form th:action="@{'/applications/' + ${currApp.id} + '/ripple/recalculate'}" method="post">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-repeat"></i> Run Ripple Propagation
+                    </button>
+                </form>
+                <a th:href="@{'/applications/' + ${currApp.id} + '/risk'}" class="btn btn-sm btn-outline-warning text-dark">
+                    <i class="bi bi-shield-exclamation"></i> Risk Engine
+                </a>
+                <a th:href="@{'/applications/' + ${currApp.id} + '/root-cause'}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-diagram-2"></i> Root-Cause
+                </a>
+            </div>
+        </div>
+
+        <!-- Cycle warning alert if detected -->
+        <div th:if="${graph.hasCycle}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>CYCLE DETECTED:</strong> <span th:text="${graph.cycleDescription}">Invalid circular dependency detected.</span>
+        </div>
+
+        <div class="row g-3">
+            <!-- Cytoscape Graph Canvas -->
+            <div class="col-lg-8">
+                <div class="card-cm p-0 overflow-hidden position-relative">
+                    <!-- Graph Toolbar -->
+                    <div class="bg-light p-2 border-bottom d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2 small">
+                            <span class="badge" style="background:#22c55e; color:#fff;">SATISFIED</span>
+                            <span class="badge" style="background:#64748b; color:#fff;">PENDING</span>
+                            <span class="badge" style="background:#0ea5e9; color:#fff;">UNDER REVIEW</span>
+                            <span class="badge" style="background:#f59e0b; color:#fff;">AT RISK</span>
+                            <span class="badge" style="background:#ef4444; color:#fff;">BLOCKED (RIPPLE)</span>
+                            <span class="badge" style="background:#991b1b; color:#fff;">REJECTED (ROOT)</span>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button id="btnZoomIn" class="btn btn-outline-secondary btn-sm" title="Zoom In"><i class="bi bi-zoom-in"></i></button>
+                            <button id="btnZoomOut" class="btn btn-outline-secondary btn-sm" title="Zoom Out"><i class="bi bi-zoom-out"></i></button>
+                            <button id="btnFit" class="btn btn-outline-secondary btn-sm" title="Fit to View"><i class="bi bi-arrows-fullscreen"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Cytoscape Container -->
+                    <div id="cy"></div>
+                </div>
+            </div>
+
+            <!-- Interactive Node Details Drawer -->
+            <div class="col-lg-4">
+                <div class="card-cm" id="nodeDetailsCard">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-info-circle text-primary"></i> Requirement Inspector
+                    </h6>
+
+                    <div id="nodePlaceholder" class="text-muted text-center py-5">
+                        <i class="bi bi-cursor fs-2 text-secondary"></i>
+                        <p class="mt-2 small">Click on any node in the dependency graph to inspect downstream ripple effects, evidence, and blockage paths.</p>
+                    </div>
+
+                    <div id="nodeDetails" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-secondary" id="detailCategory">Category</span>
+                            <span id="detailStatusBadge" class="badge-status">Status</span>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1" id="detailCodeTitle">REQ-01</h5>
+                        <p class="text-muted small mb-3" id="detailTitle">Title</p>
+
+                        <div id="blockageAlert" class="alert alert-danger py-2 small mb-3" style="display: none;">
+                            <strong><i class="bi bi-x-octagon-fill"></i> Ripple Blocker Explanation:</strong>
+                            <div id="detailExplanation" class="mt-1"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small fw-semibold text-muted">Mandatory Requirement:</div>
+                            <div id="detailMandatory" class="small text-dark">Yes</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small fw-semibold text-muted">Evidence Documents:</div>
+                            <div id="detailEvidence" class="small text-dark">0 uploaded</div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <a id="btnUploadEvidence" th:href="@{'/applications/' + ${currApp.id}}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-upload"></i> Manage / Upload Evidence
+                            </a>
+                            <a id="btnCreateRecoveryAction" th:href="@{/corrective-actions/new}" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-tools"></i> Create Recovery Task
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Cytoscape and Dagre Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+document.addEventListener("DOMContentLoaded", function() {
+    const appId = /*[[${currApp != null ? currApp.id : 0}]]*/ 0;
+    fetch(`/api/applications/${appId}/graph-data`)
+        .then(res => res.json())
+        .then(response => {
+            if (!response.success || !response.data) return;
+            const data = response.data;
+            initCytoscape(data);
+        })
+        .catch(err => console.error("Error fetching graph data:", err));
+});
+
+function initCytoscape(graphData) {
+    const elements = [];
+
+    // Add nodes
+    graphData.nodes.forEach(n => {
+        elements.push({
+            data: {
+                id: n.id,
+                label: n.code + "\n" + n.title.substring(0, 20) + (n.title.length > 20 ? "..." : ""),
+                fullTitle: n.title,
+                code: n.code,
+                category: n.category,
+                mandatory: n.mandatory,
+                status: n.status,
+                rootIssue: n.rootIssue,
+                explanation: n.explanation || "",
+                evidenceCount: n.evidenceCount
+            }
+        });
+    });
+
+    // Add edges
+    graphData.edges.forEach(e => {
+        elements.push({
+            data: {
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                label: e.dependencyType === "HARD_BLOCKER" ? "BLOCKS" : "REQUIRES",
+                blocking: e.blocking,
+                type: e.dependencyType
+            }
+        });
+    });
+
+    const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: elements,
+        style: [
+            {
+                selector: 'node',
+                style: {
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'text-wrap': 'wrap',
+                    'font-size': '11px',
+                    'font-weight': '600',
+                    'color': '#ffffff',
+                    'width': '140px',
+                    'height': '65px',
+                    'shape': 'round-rectangle',
+                    'border-width': 2,
+                    'border-color': '#cbd5e1'
+                }
+            },
+            {
+                selector: 'node[status = "SATISFIED"]',
+                style: { 'background-color': '#22c55e', 'border-color': '#16a34a' }
+            },
+            {
+                selector: 'node[status = "PENDING"]',
+                style: { 'background-color': '#64748b', 'border-color': '#475569' }
+            },
+            {
+                selector: 'node[status = "UNDER_REVIEW"]',
+                style: { 'background-color': '#0ea5e9', 'border-color': '#0284c7' }
+            },
+            {
+                selector: 'node[status = "AT_RISK"]',
+                style: { 'background-color': '#f59e0b', 'border-color': '#d97706' }
+            },
+            {
+                selector: 'node[status = "BLOCKED"]',
+                style: { 'background-color': '#ef4444', 'border-color': '#b91c1c' }
+            },
+            {
+                selector: 'node[status = "REJECTED"]',
+                style: { 'background-color': '#991b1b', 'border-color': '#7f1d1d', 'border-width': 4 }
+            },
+            {
+                selector: 'node[?rootIssue]',
+                style: {
+                    'border-style': 'double',
+                    'border-width': 6,
+                    'border-color': '#ff0000'
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'width': 2,
+                    'line-color': '#94a3b8',
+                    'target-arrow-color': '#94a3b8',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'bezier',
+                    'font-size': '9px',
+                    'color': '#64748b',
+                    'label': 'data(label)'
+                }
+            },
+            {
+                selector: 'edge[?blocking]',
+                style: {
+                    'width': 4,
+                    'line-color': '#ef4444',
+                    'target-arrow-color': '#ef4444',
+                    'line-style': 'dashed'
+                }
+            },
+            {
+                selector: ':selected',
+                style: {
+                    'border-color': '#0284c7',
+                    'border-width': 4
+                }
+            }
+        ],
+        layout: {
+            name: 'dagre',
+            rankDir: 'TB',
+            nodeSep: 60,
+            rankSep: 80,
+            padding: 30
+        }
+    });
+
+    // Zoom and pan buttons
+    document.getElementById('btnZoomIn').addEventListener('click', () => {
+        cy.zoom(cy.zoom() * 1.2);
+    });
+    document.getElementById('btnZoomOut').addEventListener('click', () => {
+        cy.zoom(cy.zoom() * 0.8);
+    });
+    document.getElementById('btnFit').addEventListener('click', () => {
+        cy.fit(30);
+    });
+
+    // Node click inspector
+    cy.on('tap', 'node', function(evt) {
+        const node = evt.target;
+        const d = node.data();
+
+        document.getElementById('nodePlaceholder').style.display = 'none';
+        document.getElementById('nodeDetails').style.display = 'block';
+
+        document.getElementById('detailCategory').innerText = d.category || 'General';
+        document.getElementById('detailCodeTitle').innerText = d.code;
+        document.getElementById('detailTitle').innerText = d.fullTitle;
+        document.getElementById('detailMandatory').innerText = d.mandatory ? 'Yes (Mandatory)' : 'Optional';
+        document.getElementById('detailEvidence').innerText = d.evidenceCount + ' uploaded';
+
+        const statusBadge = document.getElementById('detailStatusBadge');
+        statusBadge.className = 'badge-status badge-' + d.status;
+        statusBadge.innerText = d.status;
+
+        const blockageAlert = document.getElementById('blockageAlert');
+        if (d.status === 'BLOCKED' || d.status === 'REJECTED' || d.explanation) {
+            blockageAlert.style.display = 'block';
+            document.getElementById('detailExplanation').innerText = d.explanation || 'Directly failed or rejected prerequisite requirement.';
+        } else {
+            blockageAlert.style.display = 'none';
+        }
+
+        // Configure direct action button links
+        document.getElementById('btnCreateRecoveryAction').href = `/corrective-actions/new?applicationId=${/*[[${currApp != null ? currApp.id : 0}]]*/ 0}&rootIssue=${encodeURIComponent(d.code + ': ' + d.fullTitle)}`;
+    });
+}
+/*]]>*/
+</script>
+
+</body>
+</html>

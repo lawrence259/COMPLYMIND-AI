@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Application Details')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#app-view-content}, 'applications')}">
+    <div id="app-view-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item active" th:text="${currApp.applicationNumber}">APP-123</li>
+            </ol>
+        </nav>
+
+        <!-- Application Summary Card -->
+        <div class="card-cm mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-3 gap-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h4 class="fw-bold mb-0 text-dark" th:text="${currApp.title}">Application Title</h4>
+                        <span th:if="${currApp.demo}" class="badge bg-warning text-dark">SYNTHETIC DEMO</span>
+                    </div>
+                    <div class="text-muted small">
+                        <strong>App Number:</strong> <span th:text="${currApp.applicationNumber}"></span> &bull;
+                        <strong>Institution:</strong> <span th:text="${currApp.institution != null ? currApp.institution.name : 'N/A'}"></span> &bull;
+                        <strong>Framework:</strong> <span th:text="${currApp.framework != null ? currApp.framework.code : 'N/A'}"></span>
+                    </div>
+                </div>
+
+                <!-- Navigation Action Links -->
+                <div class="d-flex gap-2">
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/graph'}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-diagram-3"></i> Ripple Graph
+                    </a>
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/risk'}" class="btn btn-outline-warning text-dark btn-sm">
+                        <i class="bi bi-shield-exclamation"></i> Risk Engine
+                    </a>
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/root-cause'}" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-diagram-2"></i> Root Causes
+                    </a>
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/passport'}" class="btn btn-outline-info text-dark btn-sm">
+                        <i class="bi bi-journal-check"></i> Evidence Passport
+                    </a>
+                    <a th:href="@{'/export/applications/' + ${currApp.id} + '/report.csv'}" class="btn btn-outline-secondary btn-sm" title="Download Report CSV">
+                        <i class="bi bi-download"></i> Report CSV
+                    </a>
+                </div>
+            </div>
+
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <div class="small text-muted fw-semibold">Application Status</div>
+                    <span th:class="'badge-status badge-' + ${currApp.status}" th:text="${currApp.status}">DRAFT</span>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-muted fw-semibold">Risk Score &amp; Band</div>
+                    <span th:class="'risk-pill risk-' + ${currApp.riskBand}">
+                        <span th:text="${currApp.riskScore}"></span> (<span th:text="${currApp.riskBand}"></span>)
+                    </span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <!-- Status transition form -->
+                    <form th:action="@{'/applications/' + ${currApp.id} + '/status'}" method="post" class="d-inline-flex gap-2 align-items-center">
+                        <label class="small text-muted fw-semibold text-nowrap">Advance Status:</label>
+                        <select name="status" class="form-select form-select-sm" style="width: auto;">
+                            <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${st == currApp.status}"></option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-secondary">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requirements & Evidence Section -->
+        <div class="card-cm">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-list-check text-primary"></i> Associated Compliance Requirements &amp; Evidence
+            </h5>
+
+            <div th:if="${requirements.empty}" class="text-muted text-center py-4 small">
+                No requirements attached to this application.
+            </div>
+
+            <div th:unless="${requirements.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Requirement</th>
+                            <th>Category</th>
+                            <th>Mandatory</th>
+                            <th>Deadline</th>
+                            <th>Status (Ripple)</th>
+                            <th>Upload Evidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ar : ${requirements}">
+                            <td class="fw-bold" th:text="${ar.requirement.code}">REQ-01</td>
+                            <td>
+                                <div class="fw-semibold text-dark" th:text="${ar.requirement.title}">Title</div>
+                                <div th:if="${ar.complianceNotes != null}" class="text-danger small mt-1" th:text="${ar.complianceNotes}">Notes</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${ar.requirement.category}">Category</span>
+                            </td>
+                            <td>
+                                <span th:if="${ar.requirement.mandatory}" class="badge bg-danger text-white">Mandatory</span>
+                                <span th:unless="${ar.requirement.mandatory}" class="badge bg-light text-muted border">Optional</span>
+                            </td>
+                            <td class="small" th:text="${#temporals.format(ar.deadline, 'dd MMM yyyy')}">Date</td>
+                            <td>
+                                <span th:class="'badge-status badge-' + ${ar.status}" th:text="${ar.status}"></span>
+                            </td>
+                            <td>
+                                <!-- Quick Inline Evidence Upload Form -->
+                                <form th:action="@{/evidence/upload}" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-1">
+                                    <input type="hidden" name="applicationId" th:value="${currApp.id}">
+                                    <input type="hidden" name="appReqId" th:value="${ar.id}">
+                                    <input type="file" name="file" class="form-control form-control-sm" style="max-width: 170px;" required>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Upload Document">
+                                        <i class="bi bi-upload"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Evidence Documents Uploaded -->
+        <div class="card-cm mt-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-files text-secondary"></i> Uploaded Evidence Documents For Review
+            </h5>
+
+            <div th:if="${evidenceList.empty}" class="text-muted text-center py-4 small">
+                No documents uploaded yet. Use the upload inputs in the table above to attach PDF, Word, or Excel evidence files.
+            </div>
+
+            <div th:unless="${evidenceList.empty}" class="table-responsive">
+                <table class="table table-cm">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Requirement</th>
+                            <th>Version</th>
+                            <th>MIME Type</th>
+                            <th>Review Status</th>
+                            <th>Extracted Text Status</th>
+                            <th>Verification Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ev : ${evidenceList}">
+                            <td class="fw-semibold" th:text="${ev.originalFilename}">Doc.pdf</td>
+                            <td th:text="${ev.applicationRequirement.requirement.code}">REQ-01</td>
+                            <td><span class="badge bg-secondary" th:text="'v' + ${ev.versionNumber}">v1</span></td>
+                            <td class="small text-muted" th:text="${ev.mimeType}">pdf</td>
+                            <td>
+                                <span th:class="'badge-status badge-' + ${ev.reviewStatus}" th:text="${ev.reviewStatus}"></span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${ev.extractionStatus == 'SUCCESS' ? 'bg-success' : 'bg-warning'}"
+                                      th:text="${ev.extractionStatus}"></span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{'/evidence/review/' + ${ev.id}}" class="btn btn-primary" title="Review Document">
+                                        <i class="bi bi-check2-circle"></i> Review
+                                    </a>
+                                    <a th:href="@{'/evidence/download/' + ${ev.id}}" class="btn btn-outline-secondary" title="Download">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

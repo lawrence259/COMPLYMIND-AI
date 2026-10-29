@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="htmlhead(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}">
+    <title th:text="${title} + ' | COMPLYMIND AI'">COMPLYMIND AI</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" th:href="@{/css/complymind.css}">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="d-flex" th:fragment="page-structure(content, activeMenu)">
+    <!-- Sidebar -->
+    <aside class="sidebar d-flex flex-column flex-shrink-0" id="mainSidebar">
+        <!-- Brand -->
+        <div class="brand d-flex align-items-center justify-content-between">
+            <a th:href="@{/dashboard}" class="brand-link d-flex align-items-center gap-2 text-decoration-none">
+                <div class="brand-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <div class="brand-name">COMPLYMIND</div>
+                    <div class="brand-tag">AICTE AI</div>
+                </div>
+            </a>
+            <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="closeSidebar()" aria-label="Close sidebar">
+                <i class="bi bi-x-lg text-white"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Sections -->
+        <div class="sidebar-nav-section">
+            <div class="sidebar-section-label">OVERVIEW</div>
+            <ul class="nav flex-column mb-2">
+                <li class="nav-item">
+                    <a th:href="@{/dashboard}" class="nav-link" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+                        <i class="bi bi-grid-1x2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-section-label">COMPLIANCE WORKFLOW</div>
+            <ul class="nav flex-column mb-2">
+                <li class="nav-item">
+                    <a th:href="@{/applications}" class="nav-link" th:classappend="${activeMenu == 'applications' ? 'active' : ''}">
+                        <i class="bi bi-folder2-open"></i>
+                        <span>Applications</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/institutions}" class="nav-link" th:classappend="${activeMenu == 'institutions' ? 'active' : ''}">
+                        <i class="bi bi-building"></i>
+                        <span>Institutions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/rules}" class="nav-link" th:classappend="${activeMenu == 'rules' ? 'active' : ''}">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Compliance Rules</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-section-label">RECOVERY &amp; AUDIT</div>
+            <ul class="nav flex-column mb-2">
+                <li class="nav-item">
+                    <a th:href="@{/corrective-actions}" class="nav-link" th:classappend="${activeMenu == 'actions' ? 'active' : ''}">
+                        <i class="bi bi-tools"></i>
+                        <span>Recovery Tasks</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/notifications}" class="nav-link position-relative" th:classappend="${activeMenu == 'notifications' ? 'active' : ''}">
+                        <i class="bi bi-bell"></i>
+                        <span>Alerts &amp; Notices</span>
+                        <span id="notifBadge" class="sidebar-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/audit}" class="nav-link" th:classappend="${activeMenu == 'audit' ? 'active' : ''}">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Audit Trail</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-section-label" sec:authorize="hasAnyRole('ADMIN', 'COMPLIANCE_OFFICER')">ADMINISTRATION</div>
+            <ul class="nav flex-column" sec:authorize="hasAnyRole('ADMIN', 'COMPLIANCE_OFFICER')">
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{/users}" class="nav-link" th:classappend="${activeMenu == 'users' ? 'active' : ''}">
+                        <i class="bi bi-people"></i>
+                        <span>User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{/admin/ingest}" class="nav-link" th:classappend="${activeMenu == 'ingestion' ? 'active' : ''}">
+                        <i class="bi bi-cloud-arrow-down"></i>
+                        <span>Data Ingestion</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/swagger-ui.html}" target="_blank" class="nav-link">
+                        <i class="bi bi-code-slash"></i>
+                        <span>REST API Docs</span>
+                        <i class="bi bi-box-arrow-up-right ms-auto" style="font-size:0.7rem;opacity:0.5;"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Jury Demo Toolkit Widget -->
+        <div class="demo-toolkit mx-3 mb-3">
+            <div class="demo-toolkit-header">
+                <i class="bi bi-stars"></i> Jury Demo Toolkit
+            </div>
+            <p class="demo-toolkit-desc">One-click synthetic multi-tier DAG scenario.</p>
+            <form th:action="@{/demo/load}" method="post" class="mb-1">
+                <button type="submit" class="btn-demo btn-demo-load w-100" onclick="return confirm('Load synthetic demo dataset for jury evaluation?');">
+                    <i class="bi bi-cloud-arrow-down"></i> Load Demo Data
+                </button>
+            </form>
+            <form th:action="@{/demo/clear}" method="post">
+                <button type="submit" class="btn-demo btn-demo-clear w-100" onclick="return confirm('Remove all synthetic demo data?');">
+                    <i class="bi bi-trash"></i> Clear Demo Data
+                </button>
+            </form>
+        </div>
+
+        <!-- User profile in sidebar footer -->
+        <div class="sidebar-user-footer">
+            <div class="user-avatar-circle" sec:authentication="name">U</div>
+            <div class="user-info">
+                <div class="user-name" sec:authentication="name">User</div>
+                <div class="user-role" sec:authentication="principal.authorities">Role</div>
+            </div>
+            <form th:action="@{/logout}" method="post" class="m-0">
+                <button type="submit" class="btn-logout" title="Sign out">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow-1 d-flex flex-column main-wrapper" style="min-width: 0;">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="hamburger-btn d-lg-none" onclick="openSidebar()" aria-label="Open navigation menu">
+                    <i class="bi bi-list"></i>
+                </button>
+                <span class="badge-disclaimer">
+                    <span class="beacon-dot beacon-dot-live"></span>
+                    <i class="bi bi-shield-check text-success"></i> Human-Assisted Compliance Monitoring
+                </span>
+                <span class="badge-warning-label d-none d-md-inline">
+                    Never makes official AICTE approval decisions
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a th:href="@{/applications/new}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    <span class="d-none d-sm-inline">New Application</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash messages -->
+        <div class="px-4 pt-3">
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+
+        <!-- Render Inner Body Fragment -->
+        <main class="main-content">
+            <div th:replace="${content}"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            COMPLYMIND AI &copy; 2026 &bull; AICTE Compliance Monitoring &bull; Explainable Ripple Engine &bull; Non-Authoritative Heuristic Tool
+        </footer>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom Micro-interactions & VFX Scripts -->
+<script th:src="@{/js/complymind.js}"></script>
+</body>
+</html>
