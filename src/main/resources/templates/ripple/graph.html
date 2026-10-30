@@ -131,7 +131,7 @@
 <script th:inline="javascript">
 /*<![CDATA[*/
 document.addEventListener("DOMContentLoaded", function() {
-    const appId = /*[[${currApp != null ? currApp.id : 0}]]*/ 0;
+    const appId = /*[[${app != null ? app.id : (application != null ? application.id : 0)}]]*/ 0;
     fetch(`/api/applications/${appId}/graph-data`)
         .then(res => res.json())
         .then(response => {
@@ -307,7 +307,7 @@ function initCytoscape(graphData) {
         }
 
         // Configure direct action button links
-        document.getElementById('btnCreateRecoveryAction').href = `/corrective-actions/new?applicationId=${/*[[${currApp != null ? currApp.id : 0}]]*/ 0}&rootIssue=${encodeURIComponent(d.code + ': ' + d.fullTitle)}`;
+        document.getElementById('btnCreateRecoveryAction').href = `/corrective-actions/new?applicationId=${/*[[${app != null ? app.id : (application != null ? application.id : 0)}]]*/ 0}&rootIssue=${encodeURIComponent(d.code + ': ' + d.fullTitle)}`;
     });
 }
 /*]]>*/
