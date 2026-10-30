@@ -34,6 +34,7 @@ public class EvidenceReviewService {
     private final RippleEngineService rippleEngineService;
     private final RiskEngineService riskEngineService;
     private final AuditService auditService;
+    private final com.complymind.discrepancy.service.DiscrepancyDetectionService discrepancyDetectionService;
 
     public EvidenceReviewService(EvidenceDocumentRepository evidenceRepository,
                                  ReviewDecisionRepository reviewDecisionRepository,
@@ -43,7 +44,8 @@ public class EvidenceReviewService {
                                  DocumentParserService parserService,
                                  RippleEngineService rippleEngineService,
                                  RiskEngineService riskEngineService,
-                                 AuditService auditService) {
+                                 AuditService auditService,
+                                 com.complymind.discrepancy.service.DiscrepancyDetectionService discrepancyDetectionService) {
         this.evidenceRepository = evidenceRepository;
         this.reviewDecisionRepository = reviewDecisionRepository;
         this.appRequirementRepository = appRequirementRepository;
@@ -53,6 +55,7 @@ public class EvidenceReviewService {
         this.rippleEngineService = rippleEngineService;
         this.riskEngineService = riskEngineService;
         this.auditService = auditService;
+        this.discrepancyDetectionService = discrepancyDetectionService;
     }
 
     @Transactional(readOnly = true)
@@ -125,9 +128,10 @@ public class EvidenceReviewService {
         auditService.recordEvent("EVIDENCE_UPLOADED", "EvidenceDocument", saved.getId().toString(),
                 "Uploaded " + saved.getOriginalFilename() + " (v" + nextVersion + ") for " + ar.getRequirement().getCode());
 
-        // Re-evaluate ripple and risk
+        // Re-evaluate ripple, risk, and automated discrepancy detection
         rippleEngineService.recalculateAndPersist(applicationId);
         riskEngineService.evaluateAndPersist(applicationId);
+        discrepancyDetectionService.scanApplication(applicationId);
 
         return saved;
     }

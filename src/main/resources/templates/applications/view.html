@@ -29,7 +29,7 @@
                 </div>
 
                 <!-- Navigation Action Links -->
-                <div class="d-flex gap-2">
+                <div class="d-flex flex-wrap gap-2">
                     <a th:href="@{'/applications/' + ${currApp.id} + '/graph'}" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-diagram-3"></i> Ripple Graph
                     </a>
@@ -38,6 +38,15 @@
                     </a>
                     <a th:href="@{'/applications/' + ${currApp.id} + '/root-cause'}" class="btn btn-outline-danger btn-sm">
                         <i class="bi bi-diagram-2"></i> Root Causes
+                    </a>
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/simulator'}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-sliders"></i> What-If Simulator
+                    </a>
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/discrepancies'}" class="btn btn-outline-warning text-dark btn-sm">
+                        <i class="bi bi-search"></i> Discrepancies
+                    </a>
+                    <a th:href="@{'/applications/' + ${currApp.id} + '/recovery-plan'}" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-lightning-charge"></i> Recovery Roadmap
                     </a>
                     <a th:href="@{'/applications/' + ${currApp.id} + '/passport'}" class="btn btn-outline-info text-dark btn-sm">
                         <i class="bi bi-journal-check"></i> Evidence Passport

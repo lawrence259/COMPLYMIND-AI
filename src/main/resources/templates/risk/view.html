@@ -107,7 +107,7 @@
         </div>
 
         <!-- Explainable Contributing Reasons -->
-        <div class="card-cm">
+        <div class="card-cm mb-4">
             <h6 class="fw-bold mb-3 border-bottom pb-2">
                 <i class="bi bi-card-checklist text-primary"></i> Contributing Explanations &amp; Risk Triggers
             </h6>
@@ -117,6 +117,41 @@
                     <span th:text="${factor}">Factor reason</span>
                 </li>
             </ul>
+        </div>
+
+        <!-- Historical Risk Assessments Ledger -->
+        <div class="card-cm" th:if="${history != null and !history.empty}">
+            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-clock-history text-secondary"></i> Risk Assessment Audit Ledger &amp; Version History
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-cm small align-middle">
+                    <thead>
+                        <tr>
+                            <th>Calculation Timestamp</th>
+                            <th>Overall Score</th>
+                            <th>Risk Band</th>
+                            <th>Urgency (35%)</th>
+                            <th>Blocked (30%)</th>
+                            <th>Deficiency (20%)</th>
+                            <th>Pendency (15%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="h : ${history}">
+                            <td class="text-muted" th:text="${#temporals.format(h.calculatedAt, 'dd MMM yyyy HH:mm:ss')}">Timestamp</td>
+                            <td class="fw-bold" th:text="${h.overallScore}">Score</td>
+                            <td>
+                                <span th:class="'risk-pill risk-' + ${h.riskBand}" style="font-size: 0.75rem;" th:text="${h.riskBand}">BAND</span>
+                            </td>
+                            <td th:text="${h.deadlineUrgencyScore} + ' / 100'">0</td>
+                            <td th:text="${h.blockedDependencyScore} + ' / 100'">0</td>
+                            <td th:text="${h.evidenceDeficiencyScore} + ' / 100'">0</td>
+                            <td th:text="${h.unresolvedPendencyScore} + ' / 100'">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </div>

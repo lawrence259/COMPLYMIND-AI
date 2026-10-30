@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Evidence Discrepancy Audit')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#discrepancy-content}, 'applications')}">
+    <div id="discrepancy-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Evidence Discrepancy Audit</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    Evidence Extraction &amp; Discrepancy Audit &mdash; <span class="text-primary" th:text="${currApp.applicationNumber}"></span>
+                </h4>
+                <p class="text-muted small mb-0">Automated multi-entity extraction, regulatory rule validation, and human-in-the-loop review</p>
+            </div>
+            <div class="d-flex gap-2">
+                <form th:action="@{'/applications/' + ${currApp.id} + '/discrepancies/scan'}" method="post">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-search"></i> Re-scan All Evidence
+                    </button>
+                </form>
+                <a th:href="@{'/applications/' + ${currApp.id}}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Application Overview
+                </a>
+            </div>
+        </div>
+
+        <!-- Strict Regulatory Guardrail Disclaimer -->
+        <div class="alert alert-info py-2 mb-4 d-flex align-items-center gap-2 small">
+            <i class="bi bi-shield-check fs-4 text-primary"></i>
+            <div>
+                <strong>Regulatory Integrity Guardrail:</strong>
+                Automated extractions, entity parses, and heuristic comparisons are strictly distinct from confirmed audit findings.
+                Per AICTE regulatory standards, <strong>unknown evidence remains UNKNOWN, never PASS</strong> until confirmed by an authorized human reviewer.
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Discrepancies</div>
+                    <div class="display-6 fw-bold text-dark mt-1" th:text="${findings.size()}">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Pending Human Review</div>
+                    <div class="display-6 fw-bold text-warning mt-1"
+                         th:text="${#lists.size(findings.?[reviewStatus.name() == 'PENDING_REVIEW'])}">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Confirmed Critical/High</div>
+                    <div class="display-6 fw-bold text-danger mt-1"
+                         th:text="${#lists.size(findings.?[severity.name() == 'CRITICAL' or severity.name() == 'HIGH'])}">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Dismissed / Cleared</div>
+                    <div class="display-6 fw-bold text-success mt-1"
+                         th:text="${#lists.size(findings.?[reviewStatus.name() == 'DISMISSED'])}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Findings List -->
+        <div class="card-cm">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-cpu text-primary"></i> Detected Evidentiary Discrepancies &amp; Regulatory Variances
+            </h5>
+
+            <div th:if="${findings.empty}" class="text-center py-5">
+                <i class="bi bi-patch-check display-3 text-success mb-3"></i>
+                <h5 class="fw-bold text-dark">Zero Discrepancies Detected</h5>
+                <p class="text-muted small mb-0">All uploaded evidence documents strictly reconcile with institutional declarations and AICTE norms.</p>
+            </div>
+
+            <div th:unless="${findings.empty}" class="table-responsive">
+                <table class="table table-cm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Severity &amp; Type</th>
+                            <th>Target Requirement</th>
+                            <th>Field &amp; Comparison</th>
+                            <th>Regulatory Citation</th>
+                            <th>Confidence</th>
+                            <th>Status &amp; Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="f : ${findings}">
+                            <td>
+                                <div>
+                                    <span th:class="'badge ' + ${f.severity.name() == 'CRITICAL' ? 'bg-danger' : (f.severity.name() == 'HIGH' ? 'bg-warning text-dark' : 'bg-info text-dark')}"
+                                          th:text="${f.severity}">CRITICAL</span>
+                                </div>
+                                <div class="small fw-semibold text-muted mt-1" th:text="${f.findingType}">VALUE_MISMATCH</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${f.applicationRequirement.requirement.code}">REQ-01</div>
+                                <div class="text-muted small" th:text="${f.applicationRequirement.requirement.title}">Title</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark mb-1" th:text="${f.fieldName}">Land Area</div>
+                                <div class="small text-muted">
+                                    <span class="text-secondary fw-semibold">Declared:</span> <span th:text="${f.declaredValue}"></span><br/>
+                                    <span class="text-danger fw-semibold">Extracted:</span> <span th:text="${f.extractedValue}"></span>
+                                </div>
+                                <div th:if="${f.sourceCitation != null}" class="text-muted small mt-1 font-monospace" style="font-size: 0.75rem;">
+                                    <i class="bi bi-quote"></i> <span th:text="${f.sourceCitation}"></span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border small" th:text="${f.regulatoryReference}">APH Ref</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-primary" th:text="${f.confidenceScore} + '%'">95%</div>
+                                <div class="text-muted small" style="font-size: 0.7rem;">Heuristic Model</div>
+                            </td>
+                            <td>
+                                <div class="mb-2">
+                                    <span th:class="'badge ' + ${f.reviewStatus.name() == 'CONFIRMED' ? 'bg-danger' : (f.reviewStatus.name() == 'DISMISSED' ? 'bg-secondary' : 'bg-warning text-dark')}"
+                                          th:text="${f.reviewStatus}">PENDING</span>
+                                </div>
+
+                                <div th:if="${f.reviewStatus.name() == 'PENDING_REVIEW'}" class="d-flex gap-1">
+                                    <form th:action="@{'/discrepancies/' + ${f.id} + '/review'}" method="post" class="d-inline">
+                                        <input type="hidden" name="decision" value="CONFIRMED" />
+                                        <button type="submit" class="btn btn-xs btn-outline-danger" title="Confirm Defect">
+                                            <i class="bi bi-check-lg"></i> Confirm
+                                        </button>
+                                    </form>
+                                    <form th:action="@{'/discrepancies/' + ${f.id} + '/review'}" method="post" class="d-inline">
+                                        <input type="hidden" name="decision" value="DISMISSED" />
+                                        <button type="submit" class="btn btn-xs btn-outline-secondary" title="Dismiss / False Positive">
+                                            <i class="bi bi-x-lg"></i> Dismiss
+                                        </button>
+                                    </form>
+                                </div>
+                                <div th:unless="${f.reviewStatus.name() == 'PENDING_REVIEW'}" class="text-muted small" style="font-size: 0.75rem;">
+                                    Reviewed by <span th:text="${f.reviewedBy != null ? f.reviewedBy.username : 'System'}"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

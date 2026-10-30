@@ -56,7 +56,10 @@
                 </tr>
             </table>
 
-            <div class="mt-4 pt-3 border-top">
+            <div class="mt-4 pt-3 border-top d-flex gap-2">
+                <a th:href="@{'/institutions/' + ${institution.id} + '/digital-twin'}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-columns-gap"></i> View Compliance Digital Twin
+                </a>
                 <a th:href="@{/applications/new}" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-circle"></i> Create Application for this Institution
                 </a>

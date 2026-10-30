@@ -23,23 +23,28 @@ public class RiskController {
     private final RiskEngineService riskEngineService;
     private final RootCauseInvestigatorService rootCauseInvestigatorService;
     private final ComplianceApplicationService applicationService;
+    private final com.complymind.risk.repository.RiskAssessmentRepository riskAssessmentRepository;
 
     public RiskController(RiskEngineService riskEngineService,
                           RootCauseInvestigatorService rootCauseInvestigatorService,
-                          ComplianceApplicationService applicationService) {
+                          ComplianceApplicationService applicationService,
+                          com.complymind.risk.repository.RiskAssessmentRepository riskAssessmentRepository) {
         this.riskEngineService = riskEngineService;
         this.rootCauseInvestigatorService = rootCauseInvestigatorService;
         this.applicationService = applicationService;
+        this.riskAssessmentRepository = riskAssessmentRepository;
     }
 
     @GetMapping("/applications/{id}/risk")
     public String showRiskPage(@PathVariable Long id, Model model) {
         ComplianceApplication app = applicationService.getApplicationById(id);
         RiskBreakdown breakdown = riskEngineService.calculateRisk(id);
+        List<com.complymind.risk.entity.RiskAssessment> history = riskAssessmentRepository.findByApplicationIdOrderByCalculatedAtDesc(id);
 
         model.addAttribute("application", app);
         model.addAttribute("app", app);
         model.addAttribute("breakdown", breakdown);
+        model.addAttribute("history", history);
         return "risk/view";
     }
 

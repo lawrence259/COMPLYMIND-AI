@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('Compliance Recovery Plan')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#recovery-content}, 'applications')}">
+    <div id="recovery-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">Compliance Recovery Roadmap</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    Compliance Recovery Roadmap &mdash; <span class="text-primary" th:text="${currApp.applicationNumber}"></span>
+                </h4>
+                <p class="text-muted small mb-0">Sequenced remediation roadmap prioritizing root causes, regulatory discrepancies, and critical path blockers</p>
+            </div>
+            <div class="d-flex gap-2">
+                <form th:action="@{'/applications/' + ${currApp.id} + '/recovery-plan/generate-actions'}" method="post">
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-lightning-charge"></i> Convert Roadmap to Corrective Actions
+                    </button>
+                </form>
+                <a th:href="@{'/applications/' + ${currApp.id}}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Application Overview
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Header Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Current Risk Score</div>
+                    <div class="display-6 fw-bold text-danger mt-1" th:text="${plan.currentRiskScore}">75.0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Projected Post-Recovery Risk</div>
+                    <div class="display-6 fw-bold text-success mt-1" th:text="${plan.projectedPostRecoveryRiskScore}">15.0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Risk Reduction</div>
+                    <div class="display-6 fw-bold text-primary mt-1" th:text="'-' + ${plan.totalProjectedRiskReduction} + ' pts'">-60.0 pts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-cm text-center py-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Estimated Horizon</div>
+                    <div class="display-6 fw-bold text-secondary mt-1" th:text="${plan.totalRemediationDays} + ' Days'">14 Days</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Milestone 1: Critical Prerequisite Clearance -->
+        <div class="card-cm mb-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <h5 class="fw-bold mb-0 text-danger">
+                    <i class="bi bi-exclamation-octagon-fill"></i> Milestone 1: Critical Prerequisite Clearance (P1 - Root Blockers)
+                </h5>
+                <span class="badge bg-danger">Critical Path</span>
+            </div>
+            <p class="text-muted small">
+                These primary blocking requirements prevent downstream approval. Resolving these items liberates all dependent items in the ripple graph.
+            </p>
+
+            <div th:if="${plan.milestone1Immediate.empty}" class="text-muted small py-3">
+                <i class="bi bi-check2-circle text-success fs-5 me-1"></i> No critical root-cause blockers currently detected.
+            </div>
+
+            <div th:unless="${plan.milestone1Immediate.empty}" class="table-responsive">
+                <table class="table table-cm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Task Code</th>
+                            <th>Target Requirement</th>
+                            <th>Action &amp; Instructions</th>
+                            <th>Turnaround</th>
+                            <th>Projected Risk Drop</th>
+                            <th>Assigned Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="t : ${plan.milestone1Immediate}">
+                            <td class="fw-bold text-danger" th:text="${t.taskId}">REC-P1-1</td>
+                            <td>
+                                <span class="badge bg-light text-dark border fw-bold" th:text="${t.requirementCode}">REQ-01</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${t.title}">Task Title</div>
+                                <div class="small text-muted" th:text="${t.description}">Description</div>
+                                <div class="small text-secondary mt-1">
+                                    <i class="bi bi-book"></i> <span th:text="${t.regulatoryCitation}">AICTE APH</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger-subtle text-danger border" th:text="${t.estimatedTurnaround}">3 Days</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success" th:text="'-' + ${t.projectedRiskReduction} + ' pts'">-20.0</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border small" th:text="${t.recommendedRole}">ADMIN</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Milestone 2: Evidentiary Remediation & Discrepancies -->
+        <div class="card-cm mb-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <h5 class="fw-bold mb-0 text-warning">
+                    <i class="bi bi-shield-exclamation"></i> Milestone 2: Evidentiary Remediation &amp; Discrepancy Correction (P2 - Urgent)
+                </h5>
+                <span class="badge bg-warning text-dark">Remediation Horizon: 7 Days</span>
+            </div>
+            <p class="text-muted small">
+                Resolve machine-detected document mismatches, lapsed NOCs, and incomplete mandatory portfolios.
+            </p>
+
+            <div th:if="${plan.milestone2Urgent.empty}" class="text-muted small py-3">
+                <i class="bi bi-check2-circle text-success fs-5 me-1"></i> No urgent evidentiary deficiencies detected.
+            </div>
+
+            <div th:unless="${plan.milestone2Urgent.empty}" class="table-responsive">
+                <table class="table table-cm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Task Code</th>
+                            <th>Target Requirement</th>
+                            <th>Action &amp; Instructions</th>
+                            <th>Turnaround</th>
+                            <th>Projected Risk Drop</th>
+                            <th>Assigned Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="t : ${plan.milestone2Urgent}">
+                            <td class="fw-bold text-warning" th:text="${t.taskId}">REC-P2-1</td>
+                            <td>
+                                <span class="badge bg-light text-dark border fw-bold" th:text="${t.requirementCode}">REQ-02</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${t.title}">Task Title</div>
+                                <div class="small text-muted" th:text="${t.description}">Description</div>
+                                <div class="small text-secondary mt-1">
+                                    <i class="bi bi-book"></i> <span th:text="${t.regulatoryCitation}">AICTE APH</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning-subtle text-warning border" th:text="${t.estimatedTurnaround}">7 Days</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success" th:text="'-' + ${t.projectedRiskReduction} + ' pts'">-8.5</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border small" th:text="${t.recommendedRole}">OFFICER</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Milestone 3: Final Pre-Submission Verification -->
+        <div class="card-cm">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <h5 class="fw-bold mb-0 text-info">
+                    <i class="bi bi-patch-check"></i> Milestone 3: Pre-Submission Verification &amp; Audit Clearance (P3 - Routine)
+                </h5>
+                <span class="badge bg-info text-dark">Final Sign-Off</span>
+            </div>
+            <p class="text-muted small">
+                Verify that all evidentiary portfolios are digitally signed, evidence checksums match, and seal the final Compliance Passport dossier.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-cm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Task Code</th>
+                            <th>Target Scope</th>
+                            <th>Action &amp; Instructions</th>
+                            <th>Turnaround</th>
+                            <th>Projected Risk Drop</th>
+                            <th>Assigned Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="t : ${plan.milestone3Verification}">
+                            <td class="fw-bold text-info" th:text="${t.taskId}">REC-P3-1</td>
+                            <td>
+                                <span class="badge bg-light text-dark border fw-bold" th:text="${t.requirementCode}">PORTFOLIO</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${t.title}">Task Title</div>
+                                <div class="small text-muted" th:text="${t.description}">Description</div>
+                                <div class="small text-secondary mt-1">
+                                    <i class="bi bi-book"></i> <span th:text="${t.regulatoryCitation}">AICTE APH</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info border" th:text="${t.estimatedTurnaround}">14 Days</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success" th:text="'-' + ${t.projectedRiskReduction} + ' pts'">-5.0</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border small" th:text="${t.recommendedRole}">COMPLIANCE_OFFICER</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

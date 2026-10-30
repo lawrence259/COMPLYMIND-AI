@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: htmlhead('What-If Compliance Simulator')}"></head>
+<body>
+
+<div th:replace="~{layout :: page-structure(~{::#simulator-content}, 'applications')}">
+    <div id="simulator-content" th:with="currApp=${app != null ? app : application}">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a th:href="@{/applications}">Applications</a></li>
+                <li class="breadcrumb-item"><a th:href="@{'/applications/' + ${currApp.id}}" th:text="${currApp.applicationNumber}">APP-123</a></li>
+                <li class="breadcrumb-item active">What-If Compliance Simulator</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    What-If Compliance Simulator &mdash; <span class="text-primary" th:text="${currApp.applicationNumber}"></span>
+                </h4>
+                <p class="text-muted small mb-0">Project regulatory ripple effects, risk delta, and critical path impacts without modifying live database state</p>
+            </div>
+            <a th:href="@{'/applications/' + ${currApp.id}}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Application Overview
+            </a>
+        </div>
+
+        <!-- Strict Snapshot Isolation Banner -->
+        <div class="alert alert-warning py-2 mb-4 d-flex align-items-center gap-2 small">
+            <i class="bi bi-shield-shaded fs-4 text-warning"></i>
+            <div>
+                <strong>Sandbox Isolation Active:</strong> Simulations execute exclusively on isolated in-memory clones.
+                Live institutional records remain 100% unaltered unless you choose to authorize and apply the scenario below.
+            </div>
+        </div>
+
+        <!-- Before & After KPI Comparison Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Baseline Card -->
+            <div class="col-md-4">
+                <div class="card-cm text-center h-100 border-start border-4 border-secondary">
+                    <div class="text-muted small fw-semibold text-uppercase mb-1">Current Baseline State</div>
+                    <div class="display-5 fw-bold text-dark mb-1" th:text="${simulationResult.baselineRiskScore}">0.0</div>
+                    <div class="mb-2">
+                        <span th:class="'risk-pill risk-' + ${simulationResult.baselineRiskBand}" th:text="${simulationResult.baselineRiskBand}">LOW</span>
+                    </div>
+                    <div class="text-muted small">
+                        Blocked Items: <strong th:text="${simulationResult.baselineBlockedCount}">0</strong> &bull;
+                        Satisfied: <strong th:text="${simulationResult.baselineSatisfiedCount}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projected Card -->
+            <div class="col-md-4">
+                <div class="card-cm text-center h-100 border-start border-4"
+                     th:classappend="${simulationResult.riskScoreDelta <= 0 ? 'border-success' : 'border-danger'}">
+                    <div class="text-muted small fw-semibold text-uppercase mb-1">Projected Simulation State</div>
+                    <div class="display-5 fw-bold mb-1"
+                         th:classappend="${simulationResult.projectedRiskBand.name() == 'CRITICAL' ? 'text-danger' : (simulationResult.projectedRiskBand.name() == 'HIGH' ? 'text-warning' : 'text-success')}"
+                         th:text="${simulationResult.projectedRiskScore}">0.0</div>
+                    <div class="mb-2">
+                        <span th:class="'risk-pill risk-' + ${simulationResult.projectedRiskBand}" th:text="${simulationResult.projectedRiskBand}">LOW</span>
+                    </div>
+                    <div class="text-muted small">
+                        Blocked Items: <strong th:text="${simulationResult.projectedBlockedCount}">0</strong> &bull;
+                        Satisfied: <strong th:text="${simulationResult.projectedSatisfiedCount}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delta & Impact Summary Card -->
+            <div class="col-md-4">
+                <div class="card-cm text-center h-100 border-start border-4 border-primary">
+                    <div class="text-muted small fw-semibold text-uppercase mb-1">Risk Score Delta</div>
+                    <div class="display-5 fw-bold mb-1"
+                         th:classappend="${simulationResult.riskScoreDelta <= 0 ? 'text-success' : 'text-danger'}"
+                         th:text="${(simulationResult.riskScoreDelta > 0 ? '+' : '') + simulationResult.riskScoreDelta}">
+                        0.0
+                    </div>
+                    <div class="small fw-semibold mb-2">
+                        <span th:if="${simulationResult.riskScoreDelta < 0}" class="text-success">
+                            <i class="bi bi-graph-down-arrow"></i> Risk Reduced
+                        </span>
+                        <span th:if="${simulationResult.riskScoreDelta > 0}" class="text-danger">
+                            <i class="bi bi-graph-up-arrow"></i> Risk Increased
+                        </span>
+                        <span th:if="${simulationResult.riskScoreDelta == 0}" class="text-muted">
+                            <i class="bi bi-dash-lg"></i> No Net Risk Change
+                        </span>
+                    </div>
+                    <div class="text-muted small">
+                        Unblocked Items: <strong class="text-success" th:text="${simulationResult.unblockedRequirements.size()}">0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Findings / Unblocked Items Callout -->
+        <div th:if="${!simulationResult.unblockedRequirements.empty or !simulationResult.newlyBlockedRequirements.empty}" class="mb-4">
+            <div class="card-cm">
+                <h6 class="fw-bold mb-2">Downstream Ripple Engine Projections:</h6>
+                <div th:if="${!simulationResult.unblockedRequirements.empty}" class="mb-2">
+                    <span class="badge bg-success me-2">UNBLOCKED</span>
+                    <span class="small text-success fw-semibold">The following downstream requirements are projected to be liberated from BLOCKED status:</span>
+                    <ul class="list-unstyled ps-3 mt-1 small text-dark">
+                        <li th:each="unb : ${simulationResult.unblockedRequirements}">
+                            <i class="bi bi-unlock text-success"></i> <span th:text="${unb}"></span>
+                        </li>
+                    </ul>
+                </div>
+                <div th:if="${!simulationResult.newlyBlockedRequirements.empty}">
+                    <span class="badge bg-danger me-2">NEWLY BLOCKED</span>
+                    <span class="small text-danger fw-semibold">The following downstream requirements would become cascade-blocked:</span>
+                    <ul class="list-unstyled ps-3 mt-1 small text-dark">
+                        <li th:each="nb : ${simulationResult.newlyBlockedRequirements}">
+                            <i class="bi bi-lock text-danger"></i> <span th:text="${nb}"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Simulation Form -->
+        <form id="simForm" th:action="@{'/applications/' + ${currApp.id} + '/simulator/run'}" method="post">
+            <div class="card-cm mb-4">
+                <h5 class="fw-bold mb-3 border-bottom pb-2">
+                    <i class="bi bi-sliders text-primary"></i> Scenario Parameters &amp; Overrides
+                </h5>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Scenario Identifier</label>
+                        <input type="text" name="scenarioName" class="form-control form-control-sm"
+                               th:value="${scenario != null ? scenario.scenarioName : 'What-If: Resolve Root Blockers'}" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Simulated Deadline Extension (Days)</label>
+                        <select name="deadlineExtensionDays" class="form-select form-select-sm">
+                            <option value="0" th:selected="${scenario == null || scenario.deadlineExtensionDays == 0}">0 Days (Current Deadlines)</option>
+                            <option value="7" th:selected="${scenario != null && scenario.deadlineExtensionDays == 7}">+7 Days Extension</option>
+                            <option value="15" th:selected="${scenario != null && scenario.deadlineExtensionDays == 15}">+15 Days Extension</option>
+                            <option value="30" th:selected="${scenario != null && scenario.deadlineExtensionDays == 30}">+30 Days Extension</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-cm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Requirement</th>
+                                <th>Category</th>
+                                <th>Current Status</th>
+                                <th>Hypothetical Override Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ar : ${requirements}">
+                                <td class="fw-bold" th:text="${ar.requirement.code}">REQ-01</td>
+                                <td>
+                                    <div class="fw-semibold text-dark" th:text="${ar.requirement.title}">Title</div>
+                                    <span th:if="${ar.requirement.mandatory}" class="badge bg-danger-subtle text-danger border" style="font-size: 0.7rem;">Mandatory</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border small" th:text="${ar.requirement.category}">Infrastructure</span>
+                                </td>
+                                <td>
+                                    <span th:class="'badge-status badge-' + ${ar.status}" th:text="${ar.status}">PENDING</span>
+                                </td>
+                                <td>
+                                    <select th:name="'override_' + ${ar.id}" class="form-select form-select-sm" style="max-width: 200px;">
+                                        <option value="">-- Keep Current Status --</option>
+                                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}"
+                                                th:selected="${scenario != null and scenario.requirementOverrides[ar.id] == st}"></option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-play-circle"></i> Run In-Memory Simulation
+                    </button>
+
+                    <!-- Authorised Apply Button -->
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmApplyModal">
+                        <i class="bi bi-check-circle"></i> Apply Scenario to Live State...
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Confirmation Modal for Applying to Live State -->
+        <div class="modal fade" id="confirmApplyModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-danger" id="confirmModalLabel">
+                            <i class="bi bi-exclamation-triangle"></i> Confirm Application of Simulated Scenario
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body small text-muted">
+                        <p>You are about to write the hypothetical overrides from this simulation directly into the <strong>live production database</strong>.</p>
+                        <p>This will:</p>
+                        <ul>
+                            <li>Permanently update affected requirement records.</li>
+                            <li>Trigger automatic Ripple Engine re-evaluations across all downstream dependencies.</li>
+                            <li>Recompute the official live Institutional Risk Score.</li>
+                            <li>Write an immutable audit record of this administrative action.</li>
+                        </ul>
+                        <p class="mb-0 fw-semibold text-dark">Are you certain you wish to proceed?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="applyToLive()">
+                            Yes, Authorize and Apply to Live State
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function applyToLive() {
+    var form = document.getElementById('simForm');
+    form.action = form.action.replace('/simulator/run', '/simulator/apply');
+    form.submit();
+}
+</script>
+
+</body>
+</html>
